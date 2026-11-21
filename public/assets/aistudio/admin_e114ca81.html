@@ -1,0 +1,2753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gossaigaon Bazar - Master Admin Command Center & CMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #16a34a;
+      --primary-hover: #15803d;
+      --primary-glow: rgba(22, 163, 74, 0.25);
+      --accent: #f59e0b;
+      --bg-dark: #060911;
+      --bg-surface: #0f172a;
+      --bg-card: #162238;
+      --bg-card-hover: #1e2e4a;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #24344d;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #38bdf8;
+      --sidebar-width: 270px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; display: flex; }
+
+    #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+    .toast {
+      background: rgba(22, 34, 56, 0.96); backdrop-filter: blur(12px); border: 1px solid var(--border);
+      color: #fff; padding: 0.9rem 1.25rem; border-radius: 14px; box-shadow: 0 12px 30px rgba(0,0,0,0.55);
+      display: flex; align-items: center; gap: 12px; font-size: 0.88rem; font-weight: 700; animation: slideIn 0.3s ease forwards;
+    }
+    .toast.success { border-left: 4px solid var(--success); }
+    .toast.danger { border-left: 4px solid var(--danger); }
+    .toast.info { border-left: 4px solid var(--info); }
+    .toast.warning { border-left: 4px solid var(--warning); }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    #auth-screen {
+      position: fixed; inset: 0; background: radial-gradient(circle at 80% 20%, #14532d, #060911 70%);
+      display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1.5rem;
+    }
+    .auth-card {
+      background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid var(--border);
+      border-radius: 22px; padding: 2.5rem 2rem; width: 100%; max-width: 420px; box-shadow: 0 25px 60px rgba(0,0,0,0.65);
+    }
+    .auth-brand { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 1.5rem; }
+    .auth-brand i { font-size: 2.3rem; color: var(--primary); filter: drop-shadow(0 0 12px var(--primary-glow)); }
+    .auth-brand h1 { font-size: 1.6rem; font-weight: 900; letter-spacing: -0.5px; }
+
+    .form-group { margin-bottom: 1.05rem; }
+    .form-group label { display: block; margin-bottom: 0.4rem; font-size: 0.76rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; }
+    .form-input { width: 100%; padding: 0.75rem 0.95rem; border-radius: 12px; border: 1.5px solid var(--border); background: #090e1a; color: #fff; font-size: 0.9rem; outline: none; transition: all 0.2s; }
+    .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0.78rem 1.2rem; border-radius: 12px; font-weight: 800; cursor: pointer; border: none; transition: all 0.2s; font-size: 0.86rem; }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 6px 18px var(--primary-glow); }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-warning { background: var(--warning); color: #000; font-weight: 900; }
+    .btn-info { background: var(--info); color: #000; font-weight: 900; }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text-muted); }
+    .btn-outline:hover { color: #fff; border-color: #fff; }
+    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.75rem; border-radius: 8px; }
+
+    #app-container { display: none; width: 100%; min-height: 100vh; }
+
+    .sidebar {
+      width: var(--sidebar-width); background: #090e1a; border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; transition: transform 0.3s ease;
+    }
+    .sidebar-header { padding: 1.35rem 1.25rem; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
+    .sidebar-header i { font-size: 1.8rem; color: var(--primary); }
+    .sidebar-header div h3 { font-weight: 900; font-size: 1.15rem; line-height: 1.1; }
+    .sidebar-header div small { font-size: 0.7rem; color: #38bdf8; font-weight: 800; text-transform: uppercase; }
+
+    .nav-links { flex: 1; padding: 0.75rem 0; list-style: none; overflow-y: auto; }
+    .nav-item { padding: 0.7rem 1.3rem; display: flex; align-items: center; justify-content: space-between; color: var(--text-muted); cursor: pointer; font-weight: 800; font-size: 0.84rem; transition: all 0.2s; }
+    .nav-item:hover, .nav-item.active { color: #fff; background: var(--primary-glow); border-left: 4px solid var(--primary); }
+    .nav-item-content { display: flex; align-items: center; gap: 12px; }
+    .nav-item i { width: 20px; font-size: 0.98rem; }
+    .nav-badge-pill { background: var(--accent); color: #000; font-size: 0.68rem; font-weight: 900; padding: 2px 7px; border-radius: 10px; }
+    .sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); }
+
+    .content-area { margin-left: var(--sidebar-width); flex: 1; padding: 1.75rem 2rem; min-height: 100vh; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; gap: 15px; flex-wrap: wrap; }
+    .mobile-menu-btn { display: none; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 18px; padding: 1.15rem; display: flex; align-items: center; justify-content: space-between; }
+    .stat-info h4 { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 0.35rem; }
+    .stat-info .stat-value { font-size: 1.65rem; font-weight: 900; }
+    .stat-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; background: rgba(255, 255, 255, 0.04); color: var(--primary); }
+
+    .action-radar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.75rem; }
+    @media (max-width: 1050px) { .action-radar-grid { grid-template-columns: 1fr; } }
+    .radar-card { background: var(--bg-surface); border-radius: 20px; padding: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative; }
+    .radar-card.urgent-upi { border: 1.5px solid #38bdf8; }
+    .radar-card.live-orders { border: 1.5px solid var(--primary); }
+    .radar-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px dashed var(--border); }
+
+    .panel-section { display: none; }
+    .panel-section.active { display: block; }
+    .card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 18px; padding: 1.35rem; margin-bottom: 1.5rem; }
+    .card-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 1.15rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; background: #090e1a; border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: 12px; margin-bottom: 0.7rem; }
+    .toggle-row label { margin: 0; font-size: 0.84rem; font-weight: 700; color: #fff; cursor: pointer; }
+    .toggle-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); cursor: pointer; }
+
+    .filters-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.15rem; align-items: center; }
+    .filter-chip { padding: 0.4rem 0.9rem; border-radius: 20px; font-size: 0.75rem; font-weight: 800; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
+    .filter-chip.active, .filter-chip:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* 2/3 ORDERS IN SINGLE ROW */
+    .orders-grid-multi { display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .orders-grid-multi.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .orders-grid-multi.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    @media (max-width: 1150px) { .orders-grid-multi.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 720px) { .orders-grid-multi.cols-2, .orders-grid-multi.cols-3 { grid-template-columns: 1fr; } }
+
+    .order-grid-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1rem;
+      display: flex; flex-direction: column; justify-content: space-between; gap: 8px; transition: border-color 0.2s;
+    }
+    .order-grid-card:hover { border-color: var(--primary); }
+    .order-grid-card.spam-flagged { border: 1.5px solid var(--danger); background: rgba(239, 68, 68, 0.08); }
+
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.86rem; }
+    th { background: #090e1a; color: var(--text-muted); font-weight: 800; padding: 0.8rem 1rem; border-bottom: 1px solid var(--border); white-space: nowrap; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.4px; }
+    td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+    .badge { display: inline-block; padding: 0.3rem 0.65rem; border-radius: 9999px; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; }
+    .badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .badge-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .badge-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .badge-info { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+
+    .pin-chip { font-family: monospace; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 2px 7px; border-radius: 6px; font-weight: 900; letter-spacing: 1.5px; }
+
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 500; padding: 1.25rem; }
+    .modal-backdrop.open { display: flex; }
+    .modal-box { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 24px; max-width: 520px; width: 100%; padding: 1.75rem; max-height: 90vh; overflow-y: auto; }
+    .modal-box.wide { max-width: 780px; }
+
+    .detail-kv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 1rem; }
+    .detail-kv { background: #090e1a; border: 1px solid var(--border); border-radius: 12px; padding: 0.7rem 0.85rem; }
+    .detail-kv small { display: block; font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 2px; }
+    .detail-kv strong { font-size: 0.9rem; color: #fff; word-break: break-word; }
+
+    @media print {
+      body * { visibility: hidden !important; }
+      #printable-receipt, #printable-receipt * { visibility: visible !important; }
+      #printable-receipt { position: fixed; left: 0; top: 0; width: 100%; color: #000; background: #fff; padding: 15px; display: block !important; }
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .content-area { margin-left: 0; padding: 1.25rem; }
+      .mobile-menu-btn { display: block; }
+    }
+  </style>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+  <div id="toast-container"></div>
+
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <i class="fa-solid fa-basket-shopping"></i>
+        <h1>Gossaigaon Bazar</h1>
+      </div>
+      <h3 style="margin-bottom: 0.35rem; text-align: center;">🛡️ Master Admin Terminal</h3>
+      <p style="color: var(--text-muted); font-size: 0.82rem; text-align: center; margin-bottom: 1.4rem;">
+        Isolated Command Center, All-Panel Control & App CMS
+      </p>
+
+      <form id="admin-login-form">
+        <div class="form-group">
+          <label>Admin Email</label>
+          <input type="email" id="login-email" class="form-input" placeholder="admin@gossaigaonbazar.com" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" class="form-input" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          <i class="fa-solid fa-shield-halved"></i> Verify & Launch Admin
+        </button>
+        <div class="error-msg" id="login-error" style="color:var(--danger); font-size:0.8rem; text-align:center; margin-top:8px;"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- APP CONTAINER -->
+  <div id="app-container">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <i class="fa-solid fa-basket-shopping"></i>
+        <div>
+          <h3>Gossaigaon</h3>
+          <small><i class="fa-solid fa-satellite-dish"></i> Master OS & CMS</small>
+        </div>
+      </div>
+      <ul class="nav-links">
+        <li class="nav-item active" onclick="switchPanel('dashboard')">
+          <div class="nav-item-content"><i class="fa-solid fa-chart-pie"></i> <span>Overview Radar</span></div>
+        </li>
+        <li class="nav-item" onclick="switchPanel('product-approvals')">
+          <div class="nav-item-content"><i class="fa-solid fa-circle-check" style="color: #22c55e;"></i> <span>Product Approvals</span></div>
+          <span class="nav-badge-pill" id="sidebar-prod-approval-badge" style="background:#f59e0b; color:#000;">0</span>
+        </li>
+        <li class="nav-item" onclick="switchPanel('cms')">
+          <div class="nav-item-content"><i class="fa-solid fa-palette" style="color: #ec4899;"></i> <span>🎨 Customer Customizer</span></div>
+          <span class="nav-badge-pill" style="background:#ec4899; color:#fff;">LIVE</span>
+        </li>
+        <li class="nav-item" onclick="switchPanel('controls')">
+          <div class="nav-item-content"><i class="fa-solid fa-sliders" style="color: #a855f7;"></i> <span>🎛️ Limits & Panel Ctrl</span></div>
+          <span class="nav-badge-pill" style="background:#a855f7; color:#fff;">PRO</span>
+        </li>
+        <li class="nav-item" onclick="switchPanel('orders')">
+          <div class="nav-item-content"><i class="fa-solid fa-receipt"></i> <span>All Orders (2/3 Row)</span></div>
+          <span class="nav-badge-pill" id="sidebar-unassigned-badge" style="background:#f59e0b; color:#000; display:none;">0</span>
+        </li>
+        <li class="nav-item" onclick="switchPanel('upi')">
+          <div class="nav-item-content"><i class="fa-solid fa-qrcode" style="color:#38bdf8;"></i> <span>UPI & Screenshots</span></div>
+          <span class="nav-badge-pill" id="sidebar-upi-badge">0</span>
+        </li>
+        <li class="nav-item" onclick="switchPanel('wallet-requests')">
+          <div class="nav-item-content"><i class="fa-solid fa-wallet" style="color:#fbbf24;"></i> <span>Customer Wallets</span></div>
+          <span class="nav-badge-pill" id="sidebar-wallet-badge" style="background:#fbbf24; color:#000;">0</span>
+        </li>
+        <li class="nav-item" onclick="switchPanel('rider-payouts')">
+          <div class="nav-item-content"><i class="fa-solid fa-money-bill-transfer" style="color:#38bdf8;"></i> <span>Rider Payouts</span></div>
+          <span class="nav-badge-pill" id="sidebar-rider-payout-badge" style="background:#38bdf8; color:#000;">0</span>
+        </li>
+        <li class="nav-item" onclick="switchPanel('settlements')">
+          <div class="nav-item-content"><i class="fa-solid fa-hand-holding-dollar" style="color:#22c55e;"></i> <span>Rider COD Cash</span></div>
+          <span class="nav-badge-pill" id="sidebar-settlement-badge" style="background:#22c55e; color:#fff;">0</span>
+        </li>
+        <li class="nav-item" onclick="switchPanel('store-payouts')">
+          <div class="nav-item-content"><i class="fa-solid fa-building-columns" style="color:#c084fc;"></i> <span>Store Payouts</span></div>
+          <span class="nav-badge-pill" id="sidebar-store-payout-badge" style="background:#c084fc; color:#000;">0</span>
+        </li>
+        <li class="nav-item" onclick="switchPanel('stores')">
+          <div class="nav-item-content"><i class="fa-solid fa-store"></i> <span>Stores & Catalogs</span></div>
+        </li>
+        <li class="nav-item" onclick="switchPanel('delivery')">
+          <div class="nav-item-content"><i class="fa-solid fa-motorcycle"></i> <span>Riders, Ratings & GPS</span></div>
+        </li>
+        <li class="nav-item" onclick="switchPanel('customers')">
+          <div class="nav-item-content"><i class="fa-solid fa-user-shield"></i> <span>Customers & Spam</span></div>
+        </li>
+        <li class="nav-item" onclick="switchPanel('feedbacks')">
+          <div class="nav-item-content"><i class="fa-solid fa-comments" style="color:#34d399;"></i> <span>Helpline & Feedback</span></div>
+          <span class="nav-badge-pill" id="sidebar-feedback-badge" style="background:#34d399; color:#000;">0</span>
+        </li>
+        <li class="nav-item" onclick="switchPanel('reports')">
+          <div class="nav-item-content"><i class="fa-solid fa-chart-line"></i> <span>Financials & Profit</span></div>
+        </li>
+      </ul>
+
+      <div style="padding: 0 1.25rem 0.75rem;">
+        <button class="btn btn-outline btn-sm" style="width: 100%; border-color: rgba(22,163,74,0.4); color: var(--primary);" onclick="seedSampleData()">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> 1-Click Demo Setup
+        </button>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="btn btn-outline" style="width: 100%;" onclick="adminLogout()">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <main class="content-area">
+      <div class="topbar">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+          <h2 id="section-title">Dashboard Overview</h2>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button class="btn btn-outline btn-sm" onclick="toggleMute()" id="sound-btn">
+            <i class="fa-solid fa-volume-high"></i> Alert: ON
+          </button>
+          <div style="font-size: 0.8rem; color: var(--primary); background: var(--primary-glow); padding: 6px 14px; border-radius: 20px; border: 1px solid var(--primary); font-weight: 800;" id="admin-user-badge">
+            🛡️ Admin Verified
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 1: DASHBOARD OVERVIEW -->
+      <section id="panel-dashboard" class="panel-section active">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-info"><h4>Total Orders</h4><div class="stat-value" id="stat-orders">0</div></div><div class="stat-icon"><i class="fa-solid fa-receipt"></i></div></div>
+          <div class="stat-card"><div class="stat-info"><h4>Gross Sales</h4><div class="stat-value" id="stat-revenue" style="color: var(--primary);">₹0</div></div><div class="stat-icon"><i class="fa-solid fa-sack-dollar"></i></div></div>
+          <div class="stat-card"><div class="stat-info"><h4>Admin Profit</h4><div class="stat-value" id="stat-admin-profit" style="color: #38bdf8;">₹0</div></div><div class="stat-icon"><i class="fa-solid fa-coins"></i></div></div>
+          <div class="stat-card"><div class="stat-info"><h4>Pending Products</h4><div class="stat-value" id="stat-pending-prods" style="color: var(--warning);">0</div></div><div class="stat-icon"><i class="fa-solid fa-box-open"></i></div></div>
+          <div class="stat-card"><div class="stat-info"><h4>Rider COD Held</h4><div class="stat-value" id="stat-riders-cash" style="color: var(--warning);">₹0</div></div><div class="stat-icon"><i class="fa-solid fa-wallet"></i></div></div>
+          <div class="stat-card"><div class="stat-info"><h4>Store Dues</h4><div class="stat-value" id="stat-stores-unpaid" style="color: #c084fc;">₹0</div></div><div class="stat-icon"><i class="fa-solid fa-building-columns"></i></div></div>
+        </div>
+
+        <div class="action-radar-grid">
+          <div class="radar-card urgent-upi">
+            <div class="radar-card-header">
+              <div>
+                <strong style="color: #38bdf8; font-size: 1.05rem;"><i class="fa-solid fa-bolt"></i> Urgent UPI Verifications</strong>
+                <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">Check screenshot & 12-digit UTR to unlock Store Dispatch!</div>
+              </div>
+              <span class="badge badge-warning" id="radar-upi-count-badge">0 Pending</span>
+            </div>
+            <div class="table-responsive" style="max-height: 280px;">
+              <table>
+                <thead><tr><th>Order</th><th>Amount</th><th>UTR / Screenshot</th><th>1-Click Action</th></tr></thead>
+                <tbody id="dashboard-urgent-upi">
+                  <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">🎉 No pending UPI verifications!</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="radar-card live-orders">
+            <div class="radar-card-header">
+              <div>
+                <strong style="color: var(--primary); font-size: 1.05rem;"><i class="fa-solid fa-satellite-dish"></i> Live Orders Radar</strong>
+                <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">Latest orders, spam flags, PINs & quick cancel</div>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="switchPanel('orders')">View All</button>
+            </div>
+            <div class="table-responsive" style="max-height: 280px;">
+              <table>
+                <thead><tr><th>Order ID</th><th>Phone / PIN</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="dashboard-recent-orders">
+                  <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No recent orders.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 1B: PRODUCT APPROVAL QUEUE -->
+      <section id="panel-product-approvals" class="panel-section">
+        <div class="card" style="border: 1.5px solid var(--primary);">
+          <div class="card-title">
+            <span style="color: var(--primary);"><i class="fa-solid fa-circle-check"></i> Product Verification & Approval Queue</span>
+            <button class="btn btn-success btn-sm" onclick="approveAllPendingProducts()"><i class="fa-solid fa-check-double"></i> Approve All Pending</button>
+          </div>
+          <div class="filters-bar">
+            <div class="filter-chip active" onclick="setProdApprovalFilter('PENDING', this)">⏳ Pending Verification</div>
+            <div class="filter-chip" onclick="setProdApprovalFilter('APPROVED', this)">✅ Approved (Live)</div>
+            <div class="filter-chip" onclick="setProdApprovalFilter('REJECTED', this)">❌ Rejected</div>
+            <div class="filter-chip" onclick="setProdApprovalFilter('ALL', this)">All Products</div>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Product</th><th>Store</th><th>Price / MRP / Sale</th><th>Keywords & Desc</th><th>Status</th><th>Admin Verify Action</th></tr></thead>
+              <tbody id="product-approvals-tbody"><tr><td colspan="6" style="text-align:center;">Loading store products...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: CUSTOMER APP CUSTOMIZER (CMS) -->
+      <section id="panel-cms" class="panel-section">
+        <div class="card" style="border: 1.5px solid #ec4899;">
+          <div class="card-title">
+            <span style="color: #ec4899;"><i class="fa-solid fa-palette"></i> Full Customer App Customizer (UI, Theme, Referral & Offers)</span>
+            <small style="color: var(--text-muted); font-size: 0.8rem;">Live updates in customer.html instantly!</small>
+          </div>
+
+          <form id="app-cms-form">
+            <h4 style="color:#38bdf8; font-size:0.85rem; text-transform:uppercase; margin-bottom:0.75rem;">1. Branding, Colors & Header</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 1.25rem;">
+              <div class="form-group"><label>App Brand Name</label><input type="text" id="cms-app-name" class="form-input" required></div>
+              <div class="form-group"><label>Express ETA Header Badge</label><input type="text" id="cms-express-eta" class="form-input" required></div>
+              <div class="form-group"><label>Local Area Tag</label><input type="text" id="cms-local-tag" class="form-input" required></div>
+              <div class="form-group"><label>Search Bar Placeholder</label><input type="text" id="cms-search-placeholder" class="form-input"></div>
+              <div class="form-group"><label>Primary Brand Color</label><input type="color" id="cms-color-primary" class="form-input" style="height:44px; padding:4px;" value="#0c831f"></div>
+              <div class="form-group"><label>Accent / Yellow Pill Color</label><input type="color" id="cms-color-accent" class="form-input" style="height:44px; padding:4px;" value="#f8cb46"></div>
+              <div class="form-group"><label>App Background Color</label><input type="color" id="cms-color-bg" class="form-input" style="height:44px; padding:4px;" value="#f4f6fb"></div>
+            </div>
+
+            <h4 style="color:#38bdf8; font-size:0.85rem; text-transform:uppercase; margin-bottom:0.75rem;">2. Hero Banner, Secondary Banner & Promo</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 1.25rem;">
+              <div class="form-group"><label>Hero Banner Headline</label><input type="text" id="cms-hero-title" class="form-input" required></div>
+              <div class="form-group"><label>Hero Banner Subtitle</label><input type="text" id="cms-hero-sub" class="form-input" required></div>
+              <div class="form-group"><label>Promo Tag Badge</label><input type="text" id="cms-hero-tag" class="form-input" required></div>
+              <div class="form-group"><label>Hero Emoji / Icon</label><input type="text" id="cms-hero-emoji" class="form-input" maxlength="6"></div>
+              <div class="form-group"><label>Extra Promo Banner Text (Optional)</label><input type="text" id="cms-extra-banner-text" class="form-input"></div>
+              <div class="form-group"><label>Custom Banner Image URL (Optional)</label><input type="url" id="cms-custom-banner-img" class="form-input"></div>
+            </div>
+
+            <h4 style="color:#38bdf8; font-size:0.85rem; text-transform:uppercase; margin-bottom:0.75rem;">3. Delivery Fees, Coupons, Referral & Checkout Rules</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 1.25rem;">
+              <div class="form-group"><label>Free Delivery Above (₹)</label><input type="number" id="cms-free-del" class="form-input" min="0" max="5000" required></div>
+              <div class="form-group"><label>Standard Delivery Fee (₹)</label><input type="number" id="cms-del-fee" class="form-input" min="0" max="500" required></div>
+              <div class="form-group"><label>Min Order Amount to Checkout (₹)</label><input type="number" id="cms-min-order" class="form-input" min="0" max="2000" value="0"></div>
+              <div class="form-group"><label>Packing / Handling Fee (₹)</label><input type="number" id="cms-handling-fee" class="form-input" min="0" max="200" value="0"></div>
+              <div class="form-group"><label>Active Coupon Code</label><input type="text" id="cms-coupon-code" class="form-input" style="text-transform:uppercase;"></div>
+              <div class="form-group"><label>Coupon Discount (₹)</label><input type="number" id="cms-coupon-discount" class="form-input" min="0" max="1000"></div>
+              <div class="form-group"><label>Coupon Min Order (₹)</label><input type="number" id="cms-coupon-min" class="form-input" min="0" max="2000" value="100"></div>
+              <div class="form-group"><label>Admin Receiving UPI ID</label><input type="text" id="cms-admin-upi" class="form-input" required></div>
+              <div class="form-group"><label>Referrer Bonus (₹ Wallet)</label><input type="number" id="cms-referrer-bonus" class="form-input" min="0" max="500" value="25"></div>
+              <div class="form-group"><label>New Friend Welcome Bonus (₹)</label><input type="number" id="cms-referee-bonus" class="form-input" min="0" max="500" value="25"></div>
+            </div>
+
+            <h4 style="color:#38bdf8; font-size:0.85rem; text-transform:uppercase; margin-bottom:0.75rem;">4. Customer App Feature Toggles</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-bottom: 1.25rem;">
+              <div class="toggle-row"><label for="cms-allow-cod">💵 Allow Cash on Delivery (COD)</label><input type="checkbox" id="cms-allow-cod" checked></div>
+              <div class="toggle-row"><label for="cms-allow-upi">📱 Allow Instant UPI QR</label><input type="checkbox" id="cms-allow-upi" checked></div>
+              <div class="toggle-row"><label for="cms-allow-coupons">🏷️ Show Promo Coupon Box</label><input type="checkbox" id="cms-allow-coupons" checked></div>
+              <div class="toggle-row"><label for="cms-allow-voice">🎤 Enable Voice Search Mic</label><input type="checkbox" id="cms-allow-voice" checked></div>
+              <div class="toggle-row"><label for="cms-allow-referral">🎁 Enable Refer & Earn Program</label><input type="checkbox" id="cms-allow-referral" checked></div>
+              <div class="toggle-row"><label for="cms-show-hero">🖼️ Show Hero Promo Banner</label><input type="checkbox" id="cms-show-hero" checked></div>
+              <div class="toggle-row" style="border-color: rgba(239, 68, 68, 0.5);"><label for="cms-maintenance-mode" style="color:#fca5a5;">🚧 Maintenance Mode (Pause Orders)</label><input type="checkbox" id="cms-maintenance-mode"></div>
+            </div>
+
+            <div class="form-group"><label>Maintenance Mode Message</label><input type="text" id="cms-maintenance-msg" class="form-input"></div>
+
+            <div style="background: rgba(245, 158, 11, 0.08); border: 1.5px dashed var(--warning); border-radius: 14px; padding: 1rem; margin-bottom: 1.25rem;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <label style="color: var(--warning); font-size: 0.85rem; font-weight: 800; margin: 0;"><i class="fa-solid fa-bullhorn"></i> Live Emergency / Weather Delay Notice (Top Ticker)</label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="cms-ticker-active" style="width: 18px; height: 18px; accent-color: var(--warning);">
+                  <label for="cms-ticker-active" style="margin: 0; font-size: 0.78rem; font-weight: 800; cursor: pointer;">Enable</label>
+                </div>
+              </div>
+              <input type="text" id="cms-ticker-text" class="form-input" placeholder="e.g. 🌧️ Heavy rain in Gossaigaon town: delivery may take 5-10 extra mins!">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="padding: 0.9rem 1.8rem; background: #ec4899;">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Save & Publish Customer App Customizations
+            </button>
+          </form>
+        </div>
+
+        <div class="card" style="border: 1px solid #38bdf8;">
+          <div class="card-title">
+            <span style="color:#38bdf8;"><i class="fa-solid fa-layer-group"></i> Customer App Categories Manager</span>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-outline btn-sm" onclick="resetDefaultCategories()">Reset Defaults</button>
+              <button class="btn btn-primary btn-sm" onclick="openCategoryModal()">+ Add New Category</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Icon</th><th>ID</th><th>Category Name</th><th>Auto-Match Keywords</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="cms-categories-tbody"><tr><td colspan="6" style="text-align:center;">Loading categories...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2B: LIMITS & PANEL CONTROLS -->
+      <section id="panel-controls" class="panel-section">
+        <form id="all-panel-controls-form">
+          <div class="card" style="border: 1.5px solid #fbbf24;">
+            <div class="card-title"><span style="color: #fbbf24;"><i class="fa-solid fa-coins"></i> Master Deposit & Withdraw Money Limits (All Panels)</span></div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+              <div class="form-group"><label>Customer Min Deposit (₹)</label><input type="number" id="ctrl-min-cust-dep" class="form-input" min="1" value="50" required></div>
+              <div class="form-group"><label>Customer Max Deposit (₹)</label><input type="number" id="ctrl-max-cust-dep" class="form-input" min="10" value="5000" required></div>
+              <div class="form-group"><label>Customer Min Withdraw (₹)</label><input type="number" id="ctrl-min-cust-wd" class="form-input" min="1" value="50" required></div>
+              <div class="form-group"><label>Customer Max Withdraw (₹)</label><input type="number" id="ctrl-max-cust-wd" class="form-input" min="10" value="5000" required></div>
+              <div class="form-group"><label>Rider Min Earnings Withdraw (₹)</label><input type="number" id="ctrl-min-rider-payout" class="form-input" min="1" value="10" required></div>
+              <div class="form-group"><label>Rider Max Earnings Withdraw (₹)</label><input type="number" id="ctrl-max-rider-payout" class="form-input" min="10" value="10000" required></div>
+              <div class="form-group"><label>Rider Min COD Deposit (₹)</label><input type="number" id="ctrl-min-rider-cod-dep" class="form-input" min="1" value="10" required></div>
+              <div class="form-group"><label>Rider Max COD Deposit (₹)</label><input type="number" id="ctrl-max-rider-cod-dep" class="form-input" min="10" value="25000" required></div>
+              <div class="form-group"><label>Store Min Payout Withdraw (₹)</label><input type="number" id="ctrl-min-store-payout" class="form-input" min="0" value="10" required></div>
+              <div class="form-group"><label>Store Max Payout Withdraw (₹)</label><input type="number" id="ctrl-max-store-payout" class="form-input" min="10" value="50000" required></div>
+            </div>
+          </div>
+
+          <div class="card" style="border: 1.5px solid #a855f7;">
+            <div class="card-title"><span style="color: #c084fc;"><i class="fa-solid fa-store"></i> Store Partner Panel Controls (resturant.html)</span></div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 1rem;">
+              <div class="form-group"><label>Platform Commission Fee (%)</label><input type="number" id="ctrl-commission" class="form-input" min="0" max="50" step="0.5" value="5" required></div>
+              <div class="form-group" style="grid-column: span 2;"><label>Store Broadcast Notice (Top Banner)</label><input type="text" id="ctrl-store-notice" class="form-input"></div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px;">
+              <div class="toggle-row"><label for="ctrl-store-allow-edit">🛒 Allow Stores to Add/Edit Products</label><input type="checkbox" id="ctrl-store-allow-edit" checked></div>
+              <div class="toggle-row"><label for="ctrl-store-allow-seed">✨ Show "+6 Popular Items" Quick Seed</label><input type="checkbox" id="ctrl-store-allow-seed" checked></div>
+            </div>
+          </div>
+
+          <div class="card" style="border: 1.5px solid #38bdf8;">
+            <div class="card-title"><span style="color: #38bdf8;"><i class="fa-solid fa-motorcycle"></i> Delivery Rider Terminal Controls (deliver.html)</span></div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 1rem;">
+              <div class="form-group"><label>Rider Earning Per Order/Stop (₹)</label><input type="number" id="ctrl-rider-fee" class="form-input" min="5" max="500" value="25" required></div>
+              <div class="form-group"><label>Rider Max COD Cash Limit (₹)</label><input type="number" id="ctrl-rider-cash-limit" class="form-input" min="500" max="50000" value="3000" required></div>
+              <div class="form-group"><label>Auto-Pass Accept Countdown (Seconds)</label><input type="number" id="ctrl-rider-timeout" class="form-input" min="15" max="300" value="45" required></div>
+              <div class="form-group" style="grid-column: 1 / -1;"><label>Rider Broadcast Notice (Top Banner)</label><input type="text" id="ctrl-rider-notice" class="form-input"></div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px;">
+              <div class="toggle-row"><label for="ctrl-rider-allow-pass">🔄 Allow Riders to Pass/Reject Trips</label><input type="checkbox" id="ctrl-rider-allow-pass" checked></div>
+              <div class="toggle-row"><label for="ctrl-rider-allow-sos">⚠️ Enable Rider Road Issue / SOS Button</label><input type="checkbox" id="ctrl-rider-allow-sos" checked></div>
+            </div>
+          </div>
+
+          <div class="card" style="border: 1.5px solid var(--primary);">
+            <div class="card-title"><span style="color: var(--primary);"><i class="fa-solid fa-headset"></i> Global Helpline & Hub Contact (All Panels)</span></div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 1.25rem;">
+              <div class="form-group"><label>Helpline Phone Number</label><input type="tel" id="ctrl-support-phone" class="form-input" maxlength="10"></div>
+              <div class="form-group"><label>Helpline WhatsApp Number</label><input type="tel" id="ctrl-support-whatsapp" class="form-input" maxlength="10"></div>
+              <div class="form-group"><label>Helpline Email</label><input type="email" id="ctrl-support-email" class="form-input"></div>
+              <div class="form-group"><label>Helpline Hours</label><input type="text" id="ctrl-support-hours" class="form-input"></div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="padding: 0.9rem 1.8rem;">
+              <i class="fa-solid fa-floppy-disk"></i> Save & Apply All Limits & Controls Live
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- SECTION 3: ALL ORDERS (2/3 PER ROW + CANCEL) -->
+      <section id="panel-orders" class="panel-section">
+        <div class="card">
+          <div class="card-title">
+            <span>Customer Grocery Orders & Dispatch Engine</span>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items:center;">
+              <div style="display:flex; gap:4px; background:#090e1a; padding:4px; border-radius:10px; border:1px solid var(--border);">
+                <button class="btn btn-sm btn-primary" id="view-btn-3" onclick="setOrderLayoutMode('grid3')">3/Row</button>
+                <button class="btn btn-sm btn-outline" id="view-btn-2" onclick="setOrderLayoutMode('grid2')">2/Row</button>
+                <button class="btn btn-sm btn-outline" id="view-btn-table" onclick="setOrderLayoutMode('table')">Table</button>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="autoAssignAllPendingOrders()"><i class="fa-solid fa-location-arrow"></i> Smart Auto-Dispatch</button>
+              <button class="btn btn-success btn-sm" onclick="exportOrdersCSV()"><i class="fa-solid fa-file-excel"></i> Export CSV</button>
+            </div>
+          </div>
+
+          <div class="filters-bar">
+            <input type="text" id="order-search-input" class="form-input" style="max-width: 240px; padding: 0.45rem 0.85rem;" placeholder="Search Phone / Order ID / PIN..." oninput="filterOrdersList()">
+            <div class="filter-chip active" onclick="setOrderStatusFilter('ALL', this)">All</div>
+            <div class="filter-chip" onclick="setOrderStatusFilter('UNASSIGNED', this)">⚠️ Unassigned</div>
+            <div class="filter-chip" onclick="setOrderStatusFilter('SPAM', this)">🚨 Spam Flagged</div>
+            <div class="filter-chip" onclick="setOrderStatusFilter('PLACED', this)">Placed</div>
+            <div class="filter-chip" onclick="setOrderStatusFilter('ACCEPTED', this)">Accepted</div>
+            <div class="filter-chip" onclick="setOrderStatusFilter('PREPARING', this)">Packing</div>
+            <div class="filter-chip" onclick="setOrderStatusFilter('READY_FOR_PICKUP', this)">Ready</div>
+            <div class="filter-chip" onclick="setOrderStatusFilter('OUT_FOR_DELIVERY', this)">Out for Delivery</div>
+            <div class="filter-chip" onclick="setOrderStatusFilter('DELIVERED', this)">Delivered</div>
+            <div class="filter-chip" onclick="setOrderStatusFilter('CANCELLED', this)">Cancelled</div>
+          </div>
+
+          <div id="orders-grid-container" class="orders-grid-multi cols-3"></div>
+
+          <div class="table-responsive" id="orders-table-container" style="display:none;">
+            <table>
+              <thead><tr><th>Order ID</th><th>Customer / GPS</th><th>Total</th><th>PIN</th><th>Payment</th><th>Rider</th><th>Status & Flags</th><th>Actions</th></tr></thead>
+              <tbody id="orders-table-body"><tr><td colspan="8" style="text-align: center;">Loading grocery orders...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: UPI VERIFICATIONS & SCREENSHOTS -->
+      <section id="panel-upi" class="panel-section">
+        <div class="card">
+          <div class="card-title">
+            <span>Customer UPI Verifications, Screenshots & Refunds</span>
+            <span class="badge badge-warning" id="upi-pending-header-badge">0 Pending</span>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Order ID & Status</th><th>Customer Phone</th><th>Amount</th><th>UTR & Screenshot</th><th>Payment Status</th><th>Action</th></tr></thead>
+              <tbody id="upi-table-body"><tr><td colspan="6" style="text-align: center;">Loading UPI payments...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4B: CUSTOMER WALLET REQUESTS -->
+      <section id="panel-wallet-requests" class="panel-section">
+        <div class="card" style="border: 1.5px solid #fbbf24;">
+          <div class="card-title">
+            <span style="color:#fbbf24;"><i class="fa-solid fa-wallet"></i> Customer Wallet Deposit & Withdraw Requests</span>
+            <span class="badge badge-warning" id="wallet-pending-header-badge">0 Pending</span>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Customer</th><th>Type</th><th>Amount</th><th>UTR / Customer UPI / Screenshot</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="wallet-requests-tbody"><tr><td colspan="6" style="text-align:center;">Loading wallet requests...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 5: RIDER EARNINGS PAYOUTS -->
+      <section id="panel-rider-payouts" class="panel-section">
+        <div class="card">
+          <div class="card-title"><span>Rider Earnings Withdrawal Requests</span><span class="badge badge-info" id="rider-payout-header-badge">0 Pending</span></div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Rider Name & Phone</th><th>Withdrawal Amount</th><th>Rider Receiving UPI</th><th>Request Time</th><th>Admin Transfer UTR</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="rider-payouts-table-body"><tr><td colspan="7" style="text-align: center;">Loading rider payout requests...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 6: RIDER COD CASH SETTLEMENTS -->
+      <section id="panel-settlements" class="panel-section">
+        <div class="card">
+          <div class="card-title"><span>Rider COD Cash Deposit & Handover Log</span><span class="badge badge-success" id="settlement-pending-header-badge">0 Pending</span></div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Rider Name & Phone</th><th>Amount to Settle</th><th>Deposit Mode</th><th>UTR / Handover Ref</th><th>Date & Time</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="settlements-table-body"><tr><td colspan="7" style="text-align: center;">Loading settlement requests...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 7: STORE PAYOUTS -->
+      <section id="panel-store-payouts" class="panel-section">
+        <div class="card">
+          <div class="card-title"><span>Store Payout Requests (Pay Kirana Merchants)</span><span class="badge badge-info" id="store-payout-header-badge">0 Pending</span></div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Store Name & Phone</th><th>Payout Amount</th><th>Store Receiving UPI</th><th>Request Date</th><th>Admin Ref</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="store-payouts-table-body"><tr><td colspan="7" style="text-align: center;">Loading store payout requests...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 8: STORES DIRECTORY & CATALOGS -->
+      <section id="panel-stores" class="panel-section">
+        <div class="card">
+          <div class="card-title">
+            <span>Registered Grocery Stores, Full Details & Catalog Control</span>
+            <input type="text" id="store-admin-search" class="form-input" style="max-width:240px; padding:0.45rem 0.85rem;" placeholder="Search store name/phone..." oninput="renderStores()">
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Store Name & GPS</th><th>Contact & UPI</th><th>Duty / Items</th><th>Items Sales</th><th>Net Unpaid</th><th>Status</th><th>Full Actions</th></tr></thead>
+              <tbody id="stores-table-body"><tr><td colspan="7" style="text-align: center;">Loading stores...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 9: DELIVERY FLEET GPS RADAR & RATINGS -->
+      <section id="panel-delivery" class="panel-section">
+        <div class="card">
+          <div class="card-title">
+            <span>Delivery Fleet GPS Radar (5s Live Sync), Ratings & Rider Control</span>
+            <input type="text" id="rider-admin-search" class="form-input" style="max-width:240px; padding:0.45rem 0.85rem;" placeholder="Search rider name/phone..." oninput="renderDeliveryPartners()">
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Rider Name & Rating</th><th>Contact & UPI</th><th>Vehicle</th><th>Duty</th><th>Unsettled COD</th><th>Trips / Passed</th><th>Live 5s Radar & Trail</th><th>Full Actions</th></tr></thead>
+              <tbody id="delivery-table-body"><tr><td colspan="8" style="text-align: center;">Loading delivery riders...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 10: CUSTOMERS DIRECTORY, WALLETS & SPAM -->
+      <section id="panel-customers" class="panel-section">
+        <div class="card">
+          <div class="card-title">
+            <span>Registered Customers, Wallets, Referrals & Spam Guard</span>
+            <input type="text" id="customer-admin-search" class="form-input" style="max-width:240px; padding:0.45rem 0.85rem;" placeholder="Search name / phone / email..." oninput="renderCustomers()">
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Name & Referral</th><th>Phone & Email</th><th>Wallet</th><th>Orders / Cancels / Spam</th><th>GPS</th><th>Status</th><th>Full Actions</th></tr></thead>
+              <tbody id="customers-table-body"><tr><td colspan="7" style="text-align: center;">Loading customers...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 10B: HELPLINE & FEEDBACKS -->
+      <section id="panel-feedbacks" class="panel-section">
+        <div class="card" style="border: 1.5px solid #34d399;">
+          <div class="card-title"><span style="color:#34d399;"><i class="fa-solid fa-comments"></i> All-Panel Helpline Tickets & Feedbacks</span></div>
+          <div class="filters-bar">
+            <div class="filter-chip active" onclick="setFeedbackFilter('ALL', this)">All</div>
+            <div class="filter-chip" onclick="setFeedbackFilter('OPEN', this)">⏳ Open</div>
+            <div class="filter-chip" onclick="setFeedbackFilter('CUSTOMER', this)">🛒 Customers</div>
+            <div class="filter-chip" onclick="setFeedbackFilter('RIDER', this)">🛵 Riders</div>
+            <div class="filter-chip" onclick="setFeedbackFilter('STORE', this)">🏪 Stores</div>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Role & Sender</th><th>Subject & Rating</th><th>Message</th><th>Admin Reply</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="feedbacks-tbody"><tr><td colspan="6" style="text-align:center;">Loading feedbacks...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 11: FINANCIALS & COMMISSION PROFIT -->
+      <section id="panel-reports" class="panel-section">
+        <div class="card">
+          <div class="card-title">
+            <span>Complete Financial Ledger & Profit Breakdown</span>
+            <button class="btn btn-primary btn-sm" onclick="exportOrdersCSV()"><i class="fa-solid fa-download"></i> Download CSV Ledger</button>
+          </div>
+          <div class="stats-grid" style="margin-bottom: 1.5rem;">
+            <div class="stat-card"><div class="stat-info"><h4>Verified UPI Received</h4><div class="stat-value" id="report-verified-upi" style="color: #38bdf8;">₹0</div></div></div>
+            <div class="stat-card"><div class="stat-info"><h4>Settled COD Cash</h4><div class="stat-value" id="report-settled-cash" style="color: var(--primary);">₹0</div></div></div>
+            <div class="stat-card"><div class="stat-info"><h4>Paid to Stores</h4><div class="stat-value" id="report-paid-stores" style="color: #c084fc;">₹0</div></div></div>
+            <div class="stat-card"><div class="stat-info"><h4>Paid to Riders</h4><div class="stat-value" id="report-paid-riders" style="color: #38bdf8;">₹0</div></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Top Performing Stores by Sales Volume</div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Store Name</th><th>Total Orders</th><th>Items Sales</th><th>Admin Commission</th></tr></thead>
+              <tbody id="reports-top-stores"><tr><td colspan="4" style="text-align: center;">Calculating...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- SCREENSHOT VIEWER MODAL -->
+  <div class="modal-backdrop" id="screenshotViewerModal">
+    <div class="modal-box" style="text-align:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="font-weight:900;">Payment Screenshot Proof</h3>
+        <i class="fa-solid fa-xmark" onclick="closeModalById('screenshotViewerModal')" style="font-size:1.3rem; cursor:pointer;"></i>
+      </div>
+      <div id="screenshot-meta-text" style="font-size:0.82rem; color:#38bdf8; font-weight:800; margin-bottom:0.75rem;"></div>
+      <img id="screenshot-viewer-img" src="" style="max-width:100%; max-height:65vh; border-radius:14px; border:1px solid var(--border); object-fit:contain;" alt="Payment Screenshot">
+      <div style="margin-top:1rem;"><button class="btn btn-outline" onclick="closeModalById('screenshotViewerModal')" style="width:100%;">Close</button></div>
+    </div>
+  </div>
+
+  <!-- ADMIN UPI PAYOUT DISBURSAL MODAL -->
+  <div class="modal-backdrop" id="adminDisbursalModal">
+    <div class="modal-box" style="text-align: center;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span id="disbursal-type-badge" class="badge badge-info" style="font-size: 0.72rem;">RIDER PAYOUT</span>
+          <h3 style="font-weight: 900; font-size: 1.15rem; color: #fff;">Disburse Payout</h3>
+        </div>
+        <i class="fa-solid fa-xmark" onclick="closeDisbursalModal()" style="font-size: 1.3rem; cursor: pointer; color: var(--text-muted);"></i>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 14px; padding: 0.85rem; margin-bottom: 0.85rem; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div><strong id="disbursal-recipient-name" style="font-size: 1rem; color: #fff;">Recipient</strong><div id="disbursal-recipient-phone" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;"></div></div>
+          <span style="font-size: 0.7rem; color: #34d399; font-weight: 800;"><i class="fa-solid fa-circle-check"></i> KYC Verified</span>
+        </div>
+      </div>
+
+      <div style="background: linear-gradient(135deg, rgba(22, 163, 74, 0.15), rgba(15, 23, 42, 0.4)); border: 1.5px solid var(--primary); border-radius: 16px; padding: 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+        <div><span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; display: block;">Total Payout Amount</span><div id="disbursal-amount-display" style="font-size: 2rem; font-weight: 900; color: var(--primary);">₹0.00</div></div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="copyDisbursalAmount()" style="color: var(--primary); border-color: var(--primary);"><i class="fa-regular fa-copy"></i> Copy ₹</button>
+      </div>
+
+      <div style="background: rgba(56, 189, 248, 0.08); border: 1px dashed #38bdf8; border-radius: 14px; padding: 0.75rem 0.9rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="text-align: left;"><span style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; display: block;">Receiving UPI ID</span><code id="disbursal-upi-display" style="font-size: 0.92rem; color: #38bdf8; font-weight: 800;">recipient@upi</code></div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="copyDisbursalUpi()" style="color: #38bdf8; border-color: #38bdf8;"><i class="fa-regular fa-copy"></i> Copy UPI</button>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-bottom: 1rem;">
+        <button type="button" id="btn-disburse-mode-upi" class="btn btn-primary btn-sm" style="flex: 1;" onclick="selectDisbursalMode('UPI')"><i class="fa-solid fa-qrcode"></i> Instant UPI QR</button>
+        <button type="button" id="btn-disburse-mode-cash" class="btn btn-outline btn-sm" style="flex: 1;" onclick="selectDisbursalMode('CASH')"><i class="fa-solid fa-hand-holding-dollar"></i> Office Cash</button>
+      </div>
+
+      <div id="disbursal-upi-section">
+        <div style="background: #ffffff; padding: 10px; border-radius: 16px; width: 160px; height: 160px; margin: 0 auto 0.75rem; display: flex; align-items: center; justify-content: center;">
+          <img src="" id="disbursal-qr-img" style="width: 100%; height: 100%; object-fit: contain;" alt="UPI QR">
+        </div>
+        <a href="#" id="disbursal-upi-intent-link" class="btn btn-success" style="width: 100%; margin-bottom: 1rem; text-decoration: none;"><i class="fa-solid fa-mobile-screen-button"></i> Open & Pay in UPI App</a>
+        <div class="form-group" style="text-align: left; margin-bottom: 1rem;">
+          <label>Enter 12-Digit Bank UTR / Reference No. <span style="color:red;">*</span></label>
+          <input type="text" id="disbursal-utr-input" class="form-input" placeholder="e.g. 412893471923" maxlength="12" style="font-weight: 800; letter-spacing: 1.5px; text-align: center;">
+        </div>
+      </div>
+
+      <div id="disbursal-cash-section" style="display: none; background: rgba(245, 158, 11, 0.1); border: 1px dashed var(--warning); border-radius: 14px; padding: 1rem; text-align: left; margin-bottom: 1rem;">
+        <span style="color: var(--warning); font-size: 0.8rem; font-weight: 800; display: block; margin-bottom: 4px;"><i class="fa-solid fa-hand-holding-dollar"></i> Physical Cash Handover</span>
+        <div style="font-size: 0.75rem; color: #cbd5e1;">Exact cash amount recipient ko haath me de kar confirm button dabayein.</div>
+      </div>
+
+      <input type="hidden" id="disbursal-target-type">
+      <input type="hidden" id="disbursal-target-id">
+      <input type="hidden" id="disbursal-raw-amount">
+      <input type="hidden" id="disbursal-raw-upi">
+
+      <div style="display: flex; gap: 8px;">
+        <button type="button" class="btn btn-outline" style="flex: 1;" onclick="closeDisbursalModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" style="flex: 1.4;" onclick="confirmDisbursalSuccess()"><i class="fa-solid fa-circle-check"></i> Confirm Paid & Settle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REASSIGN DELIVERY RIDER MODAL -->
+  <div class="modal-backdrop" id="assignModal">
+    <div class="modal-box">
+      <h3 style="margin-bottom: 0.5rem;">Assign / Reassign Delivery Rider</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.85rem;" id="modal-order-label">Order: #...</p>
+      <div id="modal-rejected-riders-box" style="display:none; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); border-radius:10px; padding:0.65rem 0.85rem; font-size:0.76rem; color:#fef08a; margin-bottom:1rem;"></div>
+      <input type="hidden" id="modal-order-id">
+      <div class="form-group">
+        <label>Select Delivery Partner (Sorted Nearest to Store)</label>
+        <select id="modal-delivery-select" class="form-input"><option value="">-- Choose Rider --</option></select>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn btn-outline" onclick="closeAssignModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmDeliveryAssignment()" style="width: auto;">Confirm Assign</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULL ORDER DETAIL MODAL -->
+  <div class="modal-backdrop" id="orderDetailModal">
+    <div class="modal-box wide">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="font-weight:900;">Order Full Details & Admin Override</h3>
+        <i class="fa-solid fa-xmark" onclick="closeModalById('orderDetailModal')" style="font-size:1.3rem; cursor:pointer;"></i>
+      </div>
+      <div id="order-detail-body"></div>
+    </div>
+  </div>
+
+  <!-- CUSTOMER MANAGE MODAL -->
+  <div class="modal-backdrop" id="customerManageModal">
+    <div class="modal-box wide">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="font-weight:900; color:#38bdf8;"><i class="fa-solid fa-user-gear"></i> Customer Full Details, Wallet & Control</h3>
+        <i class="fa-solid fa-xmark" onclick="closeModalById('customerManageModal')" style="font-size:1.3rem; cursor:pointer;"></i>
+      </div>
+      <div id="customer-manage-summary" class="detail-kv-grid"></div>
+      <form id="customer-manage-form">
+        <input type="hidden" id="edit-cust-uid">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="form-group"><label>Full Name</label><input type="text" id="edit-cust-name" class="form-input" required></div>
+          <div class="form-group"><label>Mobile Number</label><input type="tel" id="edit-cust-phone" class="form-input" maxlength="10" required></div>
+        </div>
+        <div class="form-group"><label>Saved Address</label><textarea id="edit-cust-address" class="form-input" rows="2"></textarea></div>
+        <div class="form-group"><label>Admin Private Note / Warning</label><input type="text" id="edit-cust-note" class="form-input"></div>
+        <div class="toggle-row"><label for="edit-cust-blocked" style="color:#fca5a5;">🚫 Block / Ban This Customer Account</label><input type="checkbox" id="edit-cust-blocked"></div>
+        <div style="display:flex; gap:10px; margin-top:1rem;">
+          <button type="submit" class="btn btn-primary" style="flex:1;">Save Customer Changes</button>
+          <button type="button" class="btn btn-outline" onclick="closeModalById('customerManageModal')">Close</button>
+        </div>
+      </form>
+
+      <div style="margin-top:1.15rem; background:#090e1a; border:1px solid #fbbf24; border-radius:14px; padding:1rem;">
+        <strong style="color:#fbbf24; font-size:0.84rem; display:block; margin-bottom:8px;">💳 Adjust Customer Wallet Balance</strong>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <input type="number" id="admin-cust-wallet-amt" class="form-input" style="flex:1; min-width:110px;" placeholder="Amount (₹)" min="1">
+          <input type="text" id="admin-cust-wallet-reason" class="form-input" style="flex:1.5; min-width:150px;" placeholder="Reason (e.g. Refund / Bonus)">
+          <button type="button" class="btn btn-success btn-sm" onclick="adminAdjustCustomerWallet('CREDIT')">+ Credit</button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="adminAdjustCustomerWallet('DEBIT')">- Debit</button>
+        </div>
+      </div>
+
+      <div style="margin-top:1.25rem;">
+        <h4 style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">Recent Orders by This Customer</h4>
+        <div id="customer-manage-orders" style="max-height:180px; overflow-y:auto; font-size:0.82rem;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIDER MANAGE MODAL -->
+  <div class="modal-backdrop" id="riderManageModal">
+    <div class="modal-box wide">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="font-weight:900; color:#38bdf8;"><i class="fa-solid fa-motorcycle"></i> Rider Full Details, Rating & Control</h3>
+        <i class="fa-solid fa-xmark" onclick="closeModalById('riderManageModal')" style="font-size:1.3rem; cursor:pointer;"></i>
+      </div>
+      <div id="rider-manage-summary" class="detail-kv-grid"></div>
+      <form id="rider-manage-form">
+        <input type="hidden" id="edit-rider-uid">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="form-group"><label>Rider Name</label><input type="text" id="edit-rider-name" class="form-input" required></div>
+          <div class="form-group"><label>Phone</label><input type="tel" id="edit-rider-phone" class="form-input" maxlength="10" required></div>
+          <div class="form-group"><label>Vehicle</label><input type="text" id="edit-rider-vehicle" class="form-input"></div>
+          <div class="form-group"><label>Payout UPI ID</label><input type="text" id="edit-rider-upi" class="form-input"></div>
+        </div>
+        <div class="form-group"><label>Admin Notice to Rider</label><input type="text" id="edit-rider-note" class="form-input"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="toggle-row"><label for="edit-rider-approved">✅ KYC Approved</label><input type="checkbox" id="edit-rider-approved"></div>
+          <div class="toggle-row"><label for="edit-rider-online">🟢 Duty Online</label><input type="checkbox" id="edit-rider-online"></div>
+        </div>
+        <div class="toggle-row" style="border-color:rgba(239,68,68,0.5);"><label for="edit-rider-suspended" style="color:#fca5a5;">🚫 Suspend Rider</label><input type="checkbox" id="edit-rider-suspended"></div>
+        <div style="display:flex; gap:10px; margin-top:1rem;">
+          <button type="submit" class="btn btn-primary" style="flex:1;">Save Rider Profile</button>
+          <button type="button" class="btn btn-outline" onclick="closeModalById('riderManageModal')">Close</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- STORE MANAGE MODAL -->
+  <div class="modal-backdrop" id="storeManageModal">
+    <div class="modal-box wide">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="font-weight:900; color:var(--primary);"><i class="fa-solid fa-store"></i> Store Full Details, Edit & Catalog</h3>
+        <i class="fa-solid fa-xmark" onclick="closeModalById('storeManageModal')" style="font-size:1.3rem; cursor:pointer;"></i>
+      </div>
+      <div id="store-manage-summary" class="detail-kv-grid"></div>
+      <form id="store-manage-form">
+        <input type="hidden" id="edit-store-uid">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="form-group"><label>Store Name</label><input type="text" id="edit-store-name" class="form-input" required></div>
+          <div class="form-group"><label>Phone</label><input type="tel" id="edit-store-phone" class="form-input" maxlength="10" required></div>
+          <div class="form-group"><label>Categories / Cuisine</label><input type="text" id="edit-store-cuisine" class="form-input"></div>
+          <div class="form-group"><label>Store Payout UPI ID</label><input type="text" id="edit-store-upi" class="form-input"></div>
+          <div class="form-group"><label>Hours</label><input type="text" id="edit-store-hours" class="form-input"></div>
+          <div class="form-group"><label>Banner Image URL</label><input type="url" id="edit-store-image" class="form-input"></div>
+          <div class="form-group"><label>Latitude</label><input type="number" step="0.000001" id="edit-store-lat" class="form-input"></div>
+          <div class="form-group"><label>Longitude</label><input type="number" step="0.000001" id="edit-store-lng" class="form-input"></div>
+        </div>
+        <div class="form-group"><label>Physical Address</label><input type="text" id="edit-store-address" class="form-input"></div>
+        <div class="form-group"><label>Admin Notice to Store</label><input type="text" id="edit-store-note" class="form-input"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="toggle-row"><label for="edit-store-approved">✅ Store Approved</label><input type="checkbox" id="edit-store-approved"></div>
+          <div class="toggle-row"><label for="edit-store-open">🟢 Store Open</label><input type="checkbox" id="edit-store-open"></div>
+        </div>
+        <div class="toggle-row" style="border-color:rgba(239,68,68,0.5);"><label for="edit-store-suspended" style="color:#fca5a5;">🚫 Force Suspend Store</label><input type="checkbox" id="edit-store-suspended"></div>
+        <div style="display:flex; gap:10px; margin-top:1rem;">
+          <button type="submit" class="btn btn-primary" style="flex:1;">Save Store Changes</button>
+          <button type="button" class="btn btn-outline" onclick="closeModalById('storeManageModal')">Close</button>
+        </div>
+      </form>
+
+      <div style="margin-top:1.5rem; border-top:1px dashed var(--border); padding-top:1rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <h4 style="font-size:0.95rem; color:#38bdf8;">📦 Store Products Catalog & Admin Approval</h4>
+          <button type="button" class="btn btn-primary btn-sm" onclick="openAdminProductFormModal()">+ Add Product</button>
+        </div>
+        <div class="table-responsive" style="max-height:240px;">
+          <table>
+            <thead><tr><th>Product & Rating</th><th>Price / MRP</th><th>Approval</th><th>Stock</th><th>Actions</th></tr></thead>
+            <tbody id="store-manage-catalog-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN PRODUCT ADD/EDIT MODAL -->
+  <div class="modal-backdrop" id="adminProductModal">
+    <div class="modal-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 id="admin-prod-modal-title" style="font-weight:900;">Add / Edit Store Product</h3>
+        <i class="fa-solid fa-xmark" onclick="closeModalById('adminProductModal')" style="font-size:1.25rem; cursor:pointer;"></i>
+      </div>
+      <form id="admin-product-form">
+        <input type="hidden" id="admin-prod-store-id">
+        <input type="hidden" id="admin-prod-item-id">
+        <div class="form-group"><label>Product Name</label><input type="text" id="admin-prod-name" class="form-input" required></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+          <div class="form-group"><label>Sale Price (₹)</label><input type="number" step="0.01" min="1" id="admin-prod-price" class="form-input" required></div>
+          <div class="form-group"><label>MRP (₹)</label><input type="number" step="0.01" min="0" id="admin-prod-mrp" class="form-input"></div>
+          <div class="form-group"><label>Category Tag</label><input type="text" id="admin-prod-category" class="form-input" placeholder="VEG / DAIRY"></div>
+        </div>
+        <div class="form-group"><label>Search Keywords (Comma Separated)</label><input type="text" id="admin-prod-keywords" class="form-input" placeholder="aalu, potato, sabzi"></div>
+        <div class="form-group"><label>Description / Unit</label><input type="text" id="admin-prod-desc" class="form-input"></div>
+        <div class="form-group"><label>Image URL</label><input type="text" id="admin-prod-img" class="form-input"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div class="toggle-row"><label for="admin-prod-avail">In Stock</label><input type="checkbox" id="admin-prod-avail" checked></div>
+          <div class="toggle-row"><label for="admin-prod-approved">✅ Admin Approved</label><input type="checkbox" id="admin-prod-approved" checked></div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:1rem;">
+          <button type="submit" class="btn btn-primary" style="flex:1;">Save Product</button>
+          <button type="button" class="btn btn-outline" onclick="closeModalById('adminProductModal')">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DYNAMIC CATEGORY ADD/EDIT MODAL -->
+  <div class="modal-backdrop" id="cmsCategoryModal">
+    <div class="modal-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="font-weight:900;">Add / Edit Customer Category</h3>
+        <i class="fa-solid fa-xmark" onclick="closeModalById('cmsCategoryModal')" style="font-size:1.25rem; cursor:pointer;"></i>
+      </div>
+      <form id="cms-category-form">
+        <input type="hidden" id="cat-edit-index">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="form-group"><label>Category ID (No Spaces)</label><input type="text" id="cat-id" class="form-input" style="text-transform:uppercase;" required></div>
+          <div class="form-group"><label>Emoji Icon</label><input type="text" id="cat-icon" class="form-input" required></div>
+        </div>
+        <div class="form-group"><label>Display Name</label><input type="text" id="cat-name" class="form-input" required></div>
+        <div class="form-group"><label>Auto-Match Keywords (Comma Separated)</label><textarea id="cat-keywords" class="form-input" rows="2"></textarea></div>
+        <div class="toggle-row"><label for="cat-active">Show Category in Customer App</label><input type="checkbox" id="cat-active" checked></div>
+        <div style="display:flex; gap:10px; margin-top:1rem;">
+          <button type="submit" class="btn btn-primary" style="flex:1;">Save Category</button>
+          <button type="button" class="btn btn-outline" onclick="closeModalById('cmsCategoryModal')">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="printable-receipt" style="display: none;"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCuJLxRCdhAVZoN81-5weEFnSU4nDr98lo",
+      authDomain: "test-2a0d0.firebaseapp.com",
+      databaseURL: "https://test-2a0d0-default-rtdb.firebaseio.com",
+      projectId: "test-2a0d0",
+      storageBucket: "test-2a0d0.firebasestorage.app",
+      messagingSenderId: "396740286096",
+      appId: "1:396740286096:web:430751766ca9c384946a15",
+      measurementId: "G-W05VPQX3V2"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    const DEFAULT_CATEGORIES = [
+      { id: 'ALL', name: 'All Items', icon: '🛒', keywords: [], active: true },
+      { id: 'ALL_STORES', name: 'All Store', icon: '🏪', keywords: [], active: true },
+      { id: 'ON_SALE', name: 'Sale & Offers', icon: '🔥', keywords: [], active: true },
+      { id: 'FAVORITES', name: 'Favorites', icon: '❤️', keywords: [], active: true },
+      { id: 'VEG', name: 'Vegetables & Fruits', icon: '🥬', keywords: ['potato', 'aloo', 'onion', 'pyaz', 'tomato', 'tamatar', 'chilli', 'mirchi', 'ginger', 'adrak', 'garlic', 'lahsun', 'lemon', 'fruit', 'apple', 'banana', 'mango', 'veg', 'sabzi', 'gobi', 'carrot', 'cucumber', 'kheera', 'palak', 'methi', 'coriander', 'dhaniya'], active: true },
+      { id: 'DAIRY', name: 'Milk & Dairy', icon: '🥛', keywords: ['milk', 'doodh', 'amul', 'dahi', 'curd', 'paneer', 'butter', 'cheese', 'ghee', 'chaas', 'lassi', 'cream', 'egg', 'bread', 'toast'], active: true },
+      { id: 'STAPLES', name: 'Atta, Rice & Dal', icon: '🌾', keywords: ['atta', 'aashirvaad', 'chakki', 'wheat', 'rice', 'chawal', 'basmati', 'dal', 'moong', 'masoor', 'toor', 'chana', 'rajma', 'besan', 'maida', 'sooji', 'poha', 'sugar', 'cheeni', 'salt', 'namak'], active: true },
+      { id: 'OIL_MASALA', name: 'Oil & Spices', icon: '🌻', keywords: ['oil', 'mustard', 'fortune', 'refined', 'kachi ghani', 'tel', 'masala', 'haldi', 'turmeric', 'mirch', 'jeera', 'dhaniya', 'garam masala', 'hing', 'methi'], active: true },
+      { id: 'SNACKS', name: 'Snacks & Drinks', icon: '🍪', keywords: ['biscuit', 'cookie', 'chips', 'kurkure', 'lays', 'namkeen', 'bhujia', 'maggi', 'noodle', 'pasta', 'tea', 'chai', 'coffee', 'juice', 'coke', 'pepsi', 'cold drink', 'frooti', 'chocolate', 'snack'], active: true },
+      { id: 'CLEANING', name: 'Cleaning & Care', icon: '🧼', keywords: ['soap', 'surf', 'detergent', 'shampoo', 'paste', 'colgate', 'brush', 'harpic', 'vim', 'rin', 'ariel', 'tide', 'cleaner', 'wash', 'handwash', 'agarbatti', 'dettol'], active: true }
+    ];
+
+    let state = {
+      orders: {}, restaurants: {}, menus: {}, deliveryPartners: {}, customers: {},
+      settlements: {}, storePayouts: {}, riderPayouts: {}, walletRequests: {}, feedbacks: {}, settings: {}
+    };
+
+    let soundEnabled = true;
+    let currentStatusFilter = 'ALL';
+    let currentOrderLayout = 'grid3';
+    let currentProdApprovalFilter = 'PENDING';
+    let currentFeedbackFilter = 'ALL';
+    let previousOrderCount = null;
+    let commissionPercent = 5;
+    let currentDisbursalMode = 'UPI';
+    let currentEditingStoreId = null;
+    let currentEditingCustomerId = null;
+
+    function sanitizeText(str) { return String(str || '').replace(/[<>"'`]/g, ''); }
+
+    function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+      const aLat = Number(lat1), aLon = Number(lon1), bLat = Number(lat2), bLon = Number(lon2);
+      if (!Number.isFinite(aLat) || !Number.isFinite(aLon) || !Number.isFinite(bLat) || !Number.isFinite(bLon)) return Infinity;
+      const R = 6371, dLat = (bLat - aLat) * (Math.PI / 180), dLon = (bLon - aLon) * (Math.PI / 180);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(aLat * (Math.PI / 180)) * Math.cos(bLat * (Math.PI / 180)) * Math.sin(dLon / 2) ** 2;
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    function showToast(msg, type = 'success') {
+      const c = document.getElementById('toast-container');
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.innerHTML = `<i class="fa-solid fa-shield-halved"></i> <span>${msg}</span>`;
+      c.appendChild(t);
+      setTimeout(() => t.remove(), 4000);
+    }
+
+    function playOrderChime() {
+      if (!soundEnabled) return;
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+      } catch (e) {}
+    }
+
+    function toggleMute() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('sound-btn').innerHTML = soundEnabled ? '<i class="fa-solid fa-volume-high"></i> Alert: ON' : '<i class="fa-solid fa-volume-xmark"></i> Alert: OFF';
+      showToast(soundEnabled ? 'Alert chime enabled.' : 'Alert chime muted.', 'info');
+    }
+
+    function copyToClipboard(text, label) {
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => showToast(`${label} copied!`, 'info')).catch(() => {
+        const inp = document.createElement('input'); inp.value = text; document.body.appendChild(inp); inp.select(); document.execCommand('copy'); document.body.removeChild(inp);
+        showToast(`${label} copied!`, 'info');
+      });
+    }
+
+    function closeModalById(id) { const el = document.getElementById(id); if (el) el.classList.remove('open'); }
+
+    function openScreenshotViewer(src, title) {
+      if (!src) return;
+      document.getElementById('screenshot-meta-text').textContent = title || 'UPI Payment Proof';
+      document.getElementById('screenshot-viewer-img').src = src;
+      document.getElementById('screenshotViewerModal').classList.add('open');
+      window.history.pushState({ modal: 'screenshot' }, '');
+    }
+
+    // AUTHENTICATION
+    const authScreen = document.getElementById('auth-screen');
+    const appContainer = document.getElementById('app-container');
+    const loginForm = document.getElementById('admin-login-form');
+    const loginError = document.getElementById('login-error');
+
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault(); loginError.textContent = '';
+      auth.signInWithEmailAndPassword(document.getElementById('login-email').value.trim(), document.getElementById('login-password').value)
+        .catch(err => loginError.textContent = err.message || "Invalid Admin credentials.");
+    });
+
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        try {
+          const [custSnap, restSnap, delSnap] = await Promise.all([
+            db.ref('customers/' + user.uid).once('value'),
+            db.ref('restaurants/' + user.uid).once('value'),
+            db.ref('deliveryPartners/' + user.uid).once('value')
+          ]);
+          if (custSnap.exists() || restSnap.exists() || delSnap.exists()) {
+            await auth.signOut();
+            loginError.textContent = "🚨 SECURITY BLOCK: Only isolated Admin accounts can access this console!";
+            return;
+          }
+        } catch (e) {}
+
+        authScreen.style.display = 'none';
+        appContainer.style.display = 'flex';
+        document.getElementById('admin-user-badge').textContent = `🛡️ ${user.email}`;
+        showToast(`Command Center Online: ${user.email}`, 'success');
+        attachRealtimeListeners();
+      } else {
+        authScreen.style.display = 'flex';
+        appContainer.style.display = 'none';
+      }
+    });
+
+    function adminLogout() { auth.signOut(); }
+
+    // NAVIGATION
+    let currentAdminPanel = 'dashboard';
+    window.history.replaceState({ screen: 'dashboard' }, '');
+
+    function switchPanel(panelName, pushHistory = true) {
+      document.querySelectorAll('.panel-section').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      const target = document.getElementById('panel-' + panelName);
+      if (target) target.classList.add('active');
+
+      const titleMap = {
+        'dashboard': 'Dashboard Overview Radar',
+        'product-approvals': '✅ Product Verification & Approval Queue',
+        'cms': '🎨 Full Customer App Customizer (CMS)',
+        'controls': '🎛️ All Limits & Panel Controls',
+        'orders': 'All Orders (2/3 Per Row & Cancel)',
+        'upi': 'UPI Verifications, Screenshots & Refunds',
+        'wallet-requests': '💳 Customer Wallet Deposits & Withdrawals',
+        'rider-payouts': 'Rider Earnings Disbursals',
+        'settlements': 'Rider COD Cash Settlements',
+        'store-payouts': 'Store Payout Requests',
+        'stores': 'Stores Full Details & Catalog Control',
+        'delivery': 'Fleet GPS Radar, Ratings & Rider Manager',
+        'customers': 'Customers, Wallets, Referrals & Spam Guard',
+        'feedbacks': '💬 All-Panel Helpline & Feedbacks',
+        'reports': 'Financials & Commission Profit'
+      };
+      document.getElementById('section-title').textContent = titleMap[panelName] || 'Admin Panel';
+      document.querySelectorAll('.nav-item').forEach(el => {
+        if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(`'${panelName}'`)) el.classList.add('active');
+      });
+      if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
+      currentAdminPanel = panelName;
+      if (pushHistory) window.history.pushState({ screen: panelName }, '');
+    }
+
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+    window.addEventListener('popstate', () => {
+      const modals = ['screenshotViewerModal', 'cmsCategoryModal', 'adminProductModal', 'storeManageModal', 'riderManageModal', 'customerManageModal', 'orderDetailModal', 'assignModal', 'adminDisbursalModal'];
+      for (const mId of modals) {
+        const m = document.getElementById(mId);
+        if (m && m.classList.contains('open')) { m.classList.remove('open'); return; }
+      }
+      if (currentAdminPanel !== 'dashboard') { switchPanel('dashboard', false); return; }
+    });
+
+    // REALTIME LISTENERS
+    function attachRealtimeListeners() {
+      db.ref('orders').on('value', snapshot => {
+        const newOrders = snapshot.val() || {};
+        const newCount = Object.keys(newOrders).length;
+        if (previousOrderCount !== null && newCount > previousOrderCount) {
+          playOrderChime(); showToast('🔔 New Grocery Order Received!', 'success');
+        }
+        previousOrderCount = newCount;
+        state.orders = newOrders;
+        renderTopPriorityRadars(); renderOrders(); renderUpiPayments();
+        renderStores(); renderDeliveryPartners(); renderCustomers(); renderStats(); renderReports();
+      });
+
+      db.ref('restaurants').on('value', snap => {
+        state.restaurants = snap.val() || {};
+        renderStores(); renderProductApprovals(); renderStats(); renderReports();
+      });
+
+      db.ref('menus').on('value', snap => {
+        state.menus = snap.val() || {};
+        renderStores(); renderProductApprovals(); renderStats();
+        if (currentEditingStoreId && document.getElementById('storeManageModal').classList.contains('open')) {
+          renderStoreCatalogInModal(currentEditingStoreId);
+        }
+      });
+
+      db.ref('deliveryPartners').on('value', snap => {
+        state.deliveryPartners = snap.val() || {};
+        renderDeliveryPartners(); renderStats(); renderRiderPayouts();
+      });
+
+      db.ref('customers').on('value', snap => {
+        state.customers = snap.val() || {};
+        renderCustomers(); renderStats();
+        if (currentEditingCustomerId && document.getElementById('customerManageModal').classList.contains('open')) {
+          openCustomerManageModal(currentEditingCustomerId, false);
+        }
+      });
+
+      db.ref('settlements').on('value', snap => {
+        state.settlements = snap.val() || {};
+        renderSettlements(); renderDeliveryPartners(); renderStats(); renderReports();
+      });
+
+      db.ref('storePayouts').on('value', snap => {
+        state.storePayouts = snap.val() || {};
+        renderStorePayouts(); renderStores(); renderStats(); renderReports();
+      });
+
+      db.ref('riderPayouts').on('value', snap => {
+        state.riderPayouts = snap.val() || {};
+        renderRiderPayouts(); renderStats(); renderReports();
+      });
+
+      db.ref('walletRequests').on('value', snap => {
+        state.walletRequests = snap.val() || {};
+        renderWalletRequests();
+      });
+
+      db.ref('feedbacks').on('value', snap => {
+        state.feedbacks = snap.val() || {};
+        renderFeedbacks();
+      });
+
+      db.ref('admin/settings').on('value', snap => {
+        const s = snap.val() || {};
+        state.settings = s;
+
+        document.getElementById('cms-app-name').value = s.appBrandName || 'Gossaigaon Bazar';
+        document.getElementById('cms-express-eta').value = s.expressEtaText || '⚡ 15 MINS EXPRESS';
+        document.getElementById('cms-local-tag').value = s.expressLocalBadge || 'LOCAL';
+        document.getElementById('cms-search-placeholder').value = s.searchPlaceholder || 'Search vegetables, atta, milk, oil across stores...';
+        document.getElementById('cms-color-primary').value = s.themePrimaryColor || '#0c831f';
+        document.getElementById('cms-color-accent').value = s.themeAccentColor || '#f8cb46';
+        document.getElementById('cms-color-bg').value = s.themeBgColor || '#f4f6fb';
+
+        document.getElementById('cms-hero-title').value = s.heroTitle || 'Fresh Groceries Delivered';
+        document.getElementById('cms-hero-sub').value = s.heroSubtitle || 'Shop from any store together! 15-Mins Express';
+        document.getElementById('cms-hero-tag').value = s.heroTag || 'Gossaigaon Bazar';
+        document.getElementById('cms-hero-emoji').value = s.heroEmoji || '🛍️';
+        document.getElementById('cms-extra-banner-text').value = s.extraBannerText || '';
+        document.getElementById('cms-custom-banner-img').value = s.customBannerImageUrl || '';
+
+        document.getElementById('cms-free-del').value = (s.freeDeliveryAbove !== undefined) ? s.freeDeliveryAbove : 299;
+        document.getElementById('cms-del-fee').value = (s.deliveryCharge !== undefined) ? s.deliveryCharge : 25;
+        document.getElementById('cms-min-order').value = (s.minOrderAmount !== undefined) ? s.minOrderAmount : 0;
+        document.getElementById('cms-handling-fee').value = (s.handlingFee !== undefined) ? s.handlingFee : 0;
+        document.getElementById('cms-coupon-code').value = s.activeCouponCode || 'GOSSAIGAON20';
+        document.getElementById('cms-coupon-discount').value = (s.activeCouponDiscount !== undefined) ? s.activeCouponDiscount : 20;
+        document.getElementById('cms-coupon-min').value = (s.couponMinOrder !== undefined) ? s.couponMinOrder : 100;
+        document.getElementById('cms-admin-upi').value = s.upiId || 'gossaigaonbazar@apl';
+        document.getElementById('cms-referrer-bonus').value = (s.referrerBonus !== undefined) ? s.referrerBonus : 25;
+        document.getElementById('cms-referee-bonus').value = (s.refereeBonus !== undefined) ? s.refereeBonus : 25;
+
+        document.getElementById('cms-allow-cod').checked = s.allowCod !== false;
+        document.getElementById('cms-allow-upi').checked = s.allowUpi !== false;
+        document.getElementById('cms-allow-coupons').checked = s.allowCoupons !== false;
+        document.getElementById('cms-allow-voice').checked = s.allowVoiceSearch !== false;
+        document.getElementById('cms-allow-referral').checked = s.allowReferrals !== false;
+        document.getElementById('cms-show-hero').checked = s.showHeroBanner !== false;
+        document.getElementById('cms-maintenance-mode').checked = s.maintenanceMode === true;
+        document.getElementById('cms-maintenance-msg').value = s.maintenanceMessage || 'Gossaigaon Bazar is currently closed for scheduled maintenance. We will be back shortly!';
+
+        document.getElementById('cms-ticker-active').checked = s.announcementActive === true;
+        document.getElementById('cms-ticker-text').value = s.announcementText || '';
+
+        document.getElementById('ctrl-min-cust-dep').value = (s.minCustomerDeposit !== undefined) ? s.minCustomerDeposit : 50;
+        document.getElementById('ctrl-max-cust-dep').value = (s.maxCustomerDeposit !== undefined) ? s.maxCustomerDeposit : 5000;
+        document.getElementById('ctrl-min-cust-wd').value = (s.minCustomerWithdraw !== undefined) ? s.minCustomerWithdraw : 50;
+        document.getElementById('ctrl-max-cust-wd').value = (s.maxCustomerWithdraw !== undefined) ? s.maxCustomerWithdraw : 5000;
+        document.getElementById('ctrl-min-rider-payout').value = (s.minRiderPayout !== undefined) ? s.minRiderPayout : 10;
+        document.getElementById('ctrl-max-rider-payout').value = (s.maxRiderPayout !== undefined) ? s.maxRiderPayout : 10000;
+        document.getElementById('ctrl-min-rider-cod-dep').value = (s.minRiderCodDeposit !== undefined) ? s.minRiderCodDeposit : 10;
+        document.getElementById('ctrl-max-rider-cod-dep').value = (s.maxRiderCodDeposit !== undefined) ? s.maxRiderCodDeposit : 25000;
+        document.getElementById('ctrl-min-store-payout').value = (s.minStorePayout !== undefined) ? s.minStorePayout : 10;
+        document.getElementById('ctrl-max-store-payout').value = (s.maxStorePayout !== undefined) ? s.maxStorePayout : 50000;
+
+        document.getElementById('ctrl-commission').value = (s.commissionPercent !== undefined) ? s.commissionPercent : 5;
+        document.getElementById('ctrl-store-notice').value = s.storeAnnouncement || '';
+        document.getElementById('ctrl-store-allow-edit').checked = s.allowStoreProductEdit !== false;
+        document.getElementById('ctrl-store-allow-seed').checked = s.allowStoreQuickSeed !== false;
+
+        document.getElementById('ctrl-rider-fee').value = (s.riderBaseFee !== undefined) ? s.riderBaseFee : ((s.deliveryCharge !== undefined) ? s.deliveryCharge : 25);
+        document.getElementById('ctrl-rider-cash-limit').value = (s.maxRiderCashLimit !== undefined) ? s.maxRiderCashLimit : 3000;
+        document.getElementById('ctrl-rider-timeout').value = (s.riderAcceptTimeoutSec !== undefined) ? s.riderAcceptTimeoutSec : 45;
+        document.getElementById('ctrl-rider-notice').value = s.riderAnnouncement || '';
+        document.getElementById('ctrl-rider-allow-pass').checked = s.allowRiderPassTrip !== false;
+        document.getElementById('ctrl-rider-allow-sos').checked = s.allowRiderSos !== false;
+
+        document.getElementById('ctrl-support-phone').value = s.supportPhone || '';
+        document.getElementById('ctrl-support-whatsapp').value = s.supportWhatsapp || '';
+        document.getElementById('ctrl-support-email').value = s.supportEmail || '';
+        document.getElementById('ctrl-support-hours').value = s.supportHours || '7:00 AM - 10:00 PM Daily';
+
+        if (s.commissionPercent !== undefined) {
+          commissionPercent = Number(s.commissionPercent);
+          renderStores(); renderStats(); renderReports();
+        }
+        renderCmsCategoriesTable();
+      });
+    }
+
+    // CMS & CONTROLS SAVERS
+    document.getElementById('app-cms-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const payload = {
+        appBrandName: sanitizeText(document.getElementById('cms-app-name').value.trim()),
+        expressEtaText: sanitizeText(document.getElementById('cms-express-eta').value.trim()),
+        expressLocalBadge: sanitizeText(document.getElementById('cms-local-tag').value.trim()),
+        searchPlaceholder: sanitizeText(document.getElementById('cms-search-placeholder').value.trim()),
+        themePrimaryColor: document.getElementById('cms-color-primary').value,
+        themeAccentColor: document.getElementById('cms-color-accent').value,
+        themeBgColor: document.getElementById('cms-color-bg').value,
+        heroTitle: sanitizeText(document.getElementById('cms-hero-title').value.trim()),
+        heroSubtitle: sanitizeText(document.getElementById('cms-hero-sub').value.trim()),
+        heroTag: sanitizeText(document.getElementById('cms-hero-tag').value.trim()),
+        heroEmoji: sanitizeText(document.getElementById('cms-hero-emoji').value.trim()) || '🛍️',
+        extraBannerText: sanitizeText(document.getElementById('cms-extra-banner-text').value.trim()),
+        customBannerImageUrl: document.getElementById('cms-custom-banner-img').value.trim(),
+        freeDeliveryAbove: Number(document.getElementById('cms-free-del').value || 0),
+        deliveryCharge: Number(document.getElementById('cms-del-fee').value || 0),
+        minOrderAmount: Number(document.getElementById('cms-min-order').value || 0),
+        handlingFee: Number(document.getElementById('cms-handling-fee').value || 0),
+        activeCouponCode: sanitizeText(document.getElementById('cms-coupon-code').value.trim().toUpperCase()),
+        activeCouponDiscount: Number(document.getElementById('cms-coupon-discount').value || 0),
+        couponMinOrder: Number(document.getElementById('cms-coupon-min').value || 100),
+        upiId: document.getElementById('cms-admin-upi').value.trim(),
+        referrerBonus: Number(document.getElementById('cms-referrer-bonus').value || 0),
+        refereeBonus: Number(document.getElementById('cms-referee-bonus').value || 0),
+        allowCod: document.getElementById('cms-allow-cod').checked,
+        allowUpi: document.getElementById('cms-allow-upi').checked,
+        allowCoupons: document.getElementById('cms-allow-coupons').checked,
+        allowVoiceSearch: document.getElementById('cms-allow-voice').checked,
+        allowReferrals: document.getElementById('cms-allow-referral').checked,
+        showHeroBanner: document.getElementById('cms-show-hero').checked,
+        maintenanceMode: document.getElementById('cms-maintenance-mode').checked,
+        maintenanceMessage: sanitizeText(document.getElementById('cms-maintenance-msg').value.trim()),
+        announcementActive: document.getElementById('cms-ticker-active').checked,
+        announcementText: sanitizeText(document.getElementById('cms-ticker-text').value.trim()),
+        updatedAt: Date.now()
+      };
+      db.ref('admin/settings').update(payload).then(() => showToast('🎉 Customer App UI, Referral & Rules published live!', 'success'));
+    });
+
+    document.getElementById('all-panel-controls-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const payload = {
+        minCustomerDeposit: Number(document.getElementById('ctrl-min-cust-dep').value || 50),
+        maxCustomerDeposit: Number(document.getElementById('ctrl-max-cust-dep').value || 5000),
+        minCustomerWithdraw: Number(document.getElementById('ctrl-min-cust-wd').value || 50),
+        maxCustomerWithdraw: Number(document.getElementById('ctrl-max-cust-wd').value || 5000),
+        minRiderPayout: Number(document.getElementById('ctrl-min-rider-payout').value || 10),
+        maxRiderPayout: Number(document.getElementById('ctrl-max-rider-payout').value || 10000),
+        minRiderCodDeposit: Number(document.getElementById('ctrl-min-rider-cod-dep').value || 10),
+        maxRiderCodDeposit: Number(document.getElementById('ctrl-max-rider-cod-dep').value || 25000),
+        minStorePayout: Number(document.getElementById('ctrl-min-store-payout').value || 10),
+        maxStorePayout: Number(document.getElementById('ctrl-max-store-payout').value || 50000),
+        commissionPercent: Number(document.getElementById('ctrl-commission').value || 5),
+        storeAnnouncement: sanitizeText(document.getElementById('ctrl-store-notice').value.trim()),
+        allowStoreProductEdit: document.getElementById('ctrl-store-allow-edit').checked,
+        allowStoreQuickSeed: document.getElementById('ctrl-store-allow-seed').checked,
+        riderBaseFee: Number(document.getElementById('ctrl-rider-fee').value || 25),
+        maxRiderCashLimit: Number(document.getElementById('ctrl-rider-cash-limit').value || 3000),
+        riderAcceptTimeoutSec: Number(document.getElementById('ctrl-rider-timeout').value || 45),
+        riderAnnouncement: sanitizeText(document.getElementById('ctrl-rider-notice').value.trim()),
+        allowRiderPassTrip: document.getElementById('ctrl-rider-allow-pass').checked,
+        allowRiderSos: document.getElementById('ctrl-rider-allow-sos').checked,
+        supportPhone: document.getElementById('ctrl-support-phone').value.trim(),
+        supportWhatsapp: document.getElementById('ctrl-support-whatsapp').value.trim(),
+        supportEmail: document.getElementById('ctrl-support-email').value.trim(),
+        supportHours: sanitizeText(document.getElementById('ctrl-support-hours').value.trim()),
+        updatedAt: Date.now()
+      };
+      db.ref('admin/settings').update(payload).then(() => showToast('🎛️ All Limits & Panel Controls synced live!', 'success'));
+    });
+
+    // DYNAMIC CATEGORIES CRUD
+    function getActiveCategoriesList() {
+      if (Array.isArray(state.settings?.customCategories) && state.settings.customCategories.length > 0) return state.settings.customCategories;
+      return JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+    }
+
+    function renderCmsCategoriesTable() {
+      const tbody = document.getElementById('cms-categories-tbody');
+      if (!tbody) return;
+      const cats = getActiveCategoriesList();
+      tbody.innerHTML = '';
+      cats.forEach((cat, idx) => {
+        const isActive = cat.active !== false;
+        const kwPreview = Array.isArray(cat.keywords) ? cat.keywords.slice(0, 6).join(', ') : '';
+        tbody.innerHTML += `
+          <tr>
+            <td style="font-size:1.5rem;">${escapeHtml(cat.icon || '🛒')}</td>
+            <td><code>${escapeHtml(cat.id)}</code></td>
+            <td><strong>${escapeHtml(cat.name)}</strong></td>
+            <td><small style="color:var(--text-muted);">${escapeHtml(kwPreview || 'Special filter')}</small></td>
+            <td>${isActive ? '<span class="badge badge-success">Visible</span>' : '<span class="badge badge-danger">Hidden</span>'}</td>
+            <td>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-outline btn-sm" onclick="openCategoryModal(${idx})"><i class="fa-solid fa-pen"></i></button>
+                ${cat.id !== 'ALL' ? `<button class="btn btn-danger btn-sm" onclick="deleteCmsCategory(${idx})"><i class="fa-solid fa-trash"></i></button>` : ''}
+              </div>
+            </td>
+          </tr>`;
+      });
+    }
+
+    function openCategoryModal(idx = -1) {
+      const cats = getActiveCategoriesList();
+      document.getElementById('cat-edit-index').value = idx;
+      if (idx >= 0 && cats[idx]) {
+        const c = cats[idx];
+        document.getElementById('cat-id').value = c.id;
+        document.getElementById('cat-id').disabled = (c.id === 'ALL');
+        document.getElementById('cat-icon').value = c.icon || '🛒';
+        document.getElementById('cat-name').value = c.name || '';
+        document.getElementById('cat-keywords').value = Array.isArray(c.keywords) ? c.keywords.join(', ') : '';
+        document.getElementById('cat-active').checked = c.active !== false;
+      } else {
+        document.getElementById('cms-category-form').reset();
+        document.getElementById('cat-id').disabled = false;
+        document.getElementById('cat-active').checked = true;
+      }
+      document.getElementById('cmsCategoryModal').classList.add('open');
+      window.history.pushState({ modal: 'cat' }, '');
+    }
+
+    document.getElementById('cms-category-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const idx = Number(document.getElementById('cat-edit-index').value);
+      const cats = getActiveCategoriesList();
+      const catObj = {
+        id: sanitizeText(document.getElementById('cat-id').value.trim().toUpperCase().replace(/\s+/g, '_')),
+        icon: sanitizeText(document.getElementById('cat-icon').value.trim()) || '🛒',
+        name: sanitizeText(document.getElementById('cat-name').value.trim()),
+        keywords: document.getElementById('cat-keywords').value.split(',').map(k => k.trim().toLowerCase()).filter(Boolean),
+        active: document.getElementById('cat-active').checked
+      };
+      if (idx >= 0 && cats[idx]) cats[idx] = catObj; else cats.push(catObj);
+      db.ref('admin/settings/customCategories').set(cats).then(() => {
+        closeModalById('cmsCategoryModal'); showToast('Category updated live!', 'success');
+      });
+    });
+
+    function deleteCmsCategory(idx) {
+      if (!confirm('Remove this category?')) return;
+      const cats = getActiveCategoriesList(); cats.splice(idx, 1);
+      db.ref('admin/settings/customCategories').set(cats).then(() => showToast('Category removed.', 'info'));
+    }
+
+    function resetDefaultCategories() {
+      if (!confirm('Reset Customer App categories to defaults (includes All Store, Sale, Favorites)?')) return;
+      db.ref('admin/settings/customCategories').set(DEFAULT_CATEGORIES).then(() => showToast('Default categories restored!', 'success'));
+    }
+
+    // PRODUCT APPROVALS
+    function setProdApprovalFilter(filter, el) {
+      currentProdApprovalFilter = filter;
+      el.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      renderProductApprovals();
+    }
+
+    function renderProductApprovals() {
+      const tbody = document.getElementById('product-approvals-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      let allProds = [], pendingCount = 0;
+      Object.entries(state.menus).forEach(([storeId, items]) => {
+        const storeName = state.restaurants[storeId]?.name || 'Store';
+        Object.entries(items || {}).forEach(([itemId, item]) => {
+          const isApproved = item.adminApproved === true;
+          const isRejected = item.approvalStatus === 'REJECTED';
+          if (!isApproved && !isRejected) pendingCount++;
+          allProds.push({ storeId, storeName, itemId, item, isApproved, isRejected });
+        });
+      });
+
+      document.getElementById('sidebar-prod-approval-badge').textContent = pendingCount;
+      const statPend = document.getElementById('stat-pending-prods');
+      if (statPend) statPend.textContent = pendingCount;
+
+      let filtered = allProds;
+      if (currentProdApprovalFilter === 'PENDING') filtered = allProds.filter(p => !p.isApproved && !p.isRejected);
+      else if (currentProdApprovalFilter === 'APPROVED') filtered = allProds.filter(p => p.isApproved);
+      else if (currentProdApprovalFilter === 'REJECTED') filtered = allProds.filter(p => p.isRejected);
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No products in this filter.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(({ storeId, storeName, itemId, item, isApproved, isRejected }) => {
+        const mrpHtml = item.mrp && Number(item.mrp) > Number(item.price || 0) ? `<small style="text-decoration:line-through; color:var(--text-muted);">₹${Number(item.mrp).toFixed(0)}</small>` : '';
+        const saleBadge = item.isOnSale ? `<span class="badge badge-danger">🔥 SALE</span>` : '';
+        let statusBadge = `<span class="badge badge-warning">⏳ Pending Admin Verify</span>`;
+        if (isApproved) statusBadge = `<span class="badge badge-success">✅ Approved & Live</span>`;
+        if (isRejected) statusBadge = `<span class="badge badge-danger">❌ Rejected</span>`;
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${escapeHtml(item.name)}</strong> ${saleBadge}<div style="font-size:0.72rem; color:var(--text-muted);">${escapeHtml(item.category || 'Auto')}</div></td>
+            <td><strong>${escapeHtml(storeName)}</strong></td>
+            <td><strong style="color:var(--primary);">₹${Number(item.price || 0).toFixed(0)}</strong> ${mrpHtml}</td>
+            <td><div style="font-size:0.74rem; color:#cbd5e1;">${escapeHtml((item.description || '').slice(0, 40))}</div>${item.searchKeywords ? `<small style="color:#38bdf8;">KW: ${escapeHtml(item.searchKeywords)}</small>` : ''}</td>
+            <td>${statusBadge}</td>
+            <td>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                ${!isApproved ? `<button class="btn btn-success btn-sm" onclick="verifyStoreProduct('${storeId}', '${itemId}', true)"><i class="fa-solid fa-check"></i> Approve</button>` : ''}
+                ${!isRejected ? `<button class="btn btn-danger btn-sm" onclick="verifyStoreProduct('${storeId}', '${itemId}', false)"><i class="fa-solid fa-xmark"></i> Reject</button>` : ''}
+              </div>
+            </td>
+          </tr>`;
+      });
+    }
+
+    function verifyStoreProduct(storeId, itemId, approve) {
+      if (approve) {
+        db.ref(`menus/${storeId}/${itemId}`).update({ adminApproved: true, approvalStatus: 'APPROVED', rejectionReason: '', approvedAt: Date.now() })
+          .then(() => showToast('✅ Product approved & live for customer sale!', 'success'));
+      } else {
+        const reason = prompt('Reason for rejecting this product:', 'Invalid price / image or prohibited item');
+        if (reason === null) return;
+        db.ref(`menus/${storeId}/${itemId}`).update({ adminApproved: false, approvalStatus: 'REJECTED', rejectionReason: sanitizeText(reason), rejectedAt: Date.now() })
+          .then(() => showToast('❌ Product rejected.', 'danger'));
+      }
+    }
+
+    function approveAllPendingProducts() {
+      const updates = {}; let count = 0;
+      Object.entries(state.menus).forEach(([storeId, items]) => {
+        Object.entries(items || {}).forEach(([itemId, item]) => {
+          if (item.adminApproved !== true && item.approvalStatus !== 'REJECTED') {
+            updates[`menus/${storeId}/${itemId}/adminApproved`] = true;
+            updates[`menus/${storeId}/${itemId}/approvalStatus`] = 'APPROVED';
+            updates[`menus/${storeId}/${itemId}/approvedAt`] = Date.now();
+            count++;
+          }
+        });
+      });
+      if (count === 0) { showToast('No pending products to approve!', 'info'); return; }
+      db.ref().update(updates).then(() => showToast(`✅ ${count} pending products approved & live!`, 'success'));
+    }
+
+    // TOP PRIORITY RADARS
+    function renderTopPriorityRadars() {
+      const upiTbody = document.getElementById('dashboard-urgent-upi');
+      upiTbody.innerHTML = '';
+      const pendingUpiOrders = Object.entries(state.orders).filter(([_, o]) =>
+        o.paymentMode === 'UPI' && o.paymentStatus === 'PENDING_VERIFICATION' && o.status !== 'CANCELLED'
+      ).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+
+      document.getElementById('radar-upi-count-badge').textContent = `${pendingUpiOrders.length} Pending`;
+
+      if (pendingUpiOrders.length === 0) {
+        upiTbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">🎉 No pending UPI verifications!</td></tr>`;
+      } else {
+        pendingUpiOrders.slice(0, 6).forEach(([orderId, o]) => {
+          const utr = escapeHtml(String(o.transactionId || 'Not Given').trim());
+          const ssBtn = o.paymentScreenshot ? `<button class="btn btn-info btn-sm" style="margin-top:4px; padding:2px 6px;" onclick="openScreenshotByOrder('${orderId}')"><i class="fa-solid fa-image"></i> Proof</button>` : '';
+          upiTbody.innerHTML += `
+            <tr>
+              <td><strong>#${orderId.slice(-6)}</strong><div style="font-size:0.72rem; color:var(--text-muted);">${escapeHtml(o.phone || 'N/A')}</div></td>
+              <td><strong style="color:var(--primary); font-size:0.95rem;">₹${Number(o.totalAmount || 0).toFixed(0)}</strong></td>
+              <td><code style="color:#38bdf8; font-weight:800; font-size:0.85rem;">${utr}</code><div>${ssBtn}</div></td>
+              <td>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-success btn-sm" onclick="setUpiStatus('${orderId}', 'VERIFIED')"><i class="fa-solid fa-check"></i> Approve</button>
+                  <button class="btn btn-danger btn-sm" onclick="setUpiStatus('${orderId}', 'REJECTED')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+              </td>
+            </tr>`;
+        });
+      }
+
+      const recentTbody = document.getElementById('dashboard-recent-orders');
+      recentTbody.innerHTML = '';
+      const recentOrders = Object.entries(state.orders).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0)).slice(0, 6);
+
+      if (recentOrders.length === 0) {
+        recentTbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No recent orders.</td></tr>`;
+      } else {
+        recentOrders.forEach(([orderId, o]) => {
+          const spamTag = o.isSpamSuspect ? `<span class="badge badge-danger" style="font-size:0.6rem;">🚨 SPAM</span>` : '';
+          recentTbody.innerHTML += `
+            <tr>
+              <td><strong>#${orderId.slice(-6)}</strong> ${spamTag}</td>
+              <td>${escapeHtml(o.phone || 'N/A')}<div><span class="pin-chip">${escapeHtml(o.deliveryOtp || '----')}</span></div></td>
+              <td><strong>₹${Number(o.totalAmount || 0).toFixed(0)}</strong></td>
+              <td>${getStatusBadge(o.status)}</td>
+              <td>
+                <div style="display:flex; gap:4px;">
+                  <button class="btn btn-outline btn-sm" onclick="openOrderDetailModal('${orderId}')" title="Details"><i class="fa-solid fa-eye"></i></button>
+                  <button class="btn btn-outline btn-sm" onclick="openAssignModal('${orderId}', '${o.deliveryUid || ''}')" title="Assign Rider"><i class="fa-solid fa-motorcycle"></i></button>
+                  ${o.status !== 'CANCELLED' && o.status !== 'DELIVERED' ? `<button class="btn btn-danger btn-sm" onclick="adminCancelOrder('${orderId}')" title="Cancel Order"><i class="fa-solid fa-ban"></i></button>` : ''}
+                </div>
+              </td>
+            </tr>`;
+        });
+      }
+    }
+
+    function openScreenshotByOrder(orderId) {
+      const o = state.orders[orderId];
+      if (!o || !o.paymentScreenshot) return;
+      openScreenshotViewer(o.paymentScreenshot, `Order #${orderId.slice(-6)} • UTR: ${o.transactionId || 'N/A'} • ₹${Number(o.totalAmount || 0).toFixed(0)}`);
+    }
+
+    // STATS
+    function getRiderCashMetrics(riderUid) {
+      let totalCodCollected = 0;
+      Object.values(state.orders).forEach(o => {
+        if (o.deliveryUid === riderUid && o.status === 'DELIVERED' && o.paymentMode !== 'UPI' && o.paymentMode !== 'WALLET') {
+          totalCodCollected += Number(o.totalAmount || 0);
+        }
+      });
+      let totalSettled = 0;
+      Object.values(state.settlements).forEach(s => {
+        if (s.riderUid === riderUid && s.status === 'APPROVED') totalSettled += Number(s.amount || 0);
+      });
+      return { netCashInHand: Math.max(0, totalCodCollected - totalSettled), totalSettled, totalCodCollected };
+    }
+
+    function getStorePayoutMetrics(storeUid) {
+      let itemsSubtotalSales = 0, orderCount = 0;
+      Object.values(state.orders).forEach(o => {
+        if (o.restaurantId === storeUid && o.status === 'DELIVERED') {
+          orderCount++;
+          itemsSubtotalSales += (o.subtotalAmount !== undefined ? Number(o.subtotalAmount) : Number(o.totalAmount || 0));
+        }
+      });
+      const adminCut = itemsSubtotalSales * (commissionPercent / 100);
+      const netStoreShare = itemsSubtotalSales - adminCut;
+      let totalPaidToStore = 0;
+      Object.values(state.storePayouts).forEach(p => {
+        if (p.storeId === storeUid && p.status === 'PAID') totalPaidToStore += Number(p.amount || 0);
+      });
+      return { grossSales: itemsSubtotalSales, adminCut, netStoreShare, totalPaidToStore, orderCount, unpaidBalance: Math.max(0, netStoreShare - totalPaidToStore) };
+    }
+
+    function renderStats() {
+      const orderKeys = Object.keys(state.orders);
+      let totalRevenue = 0, totalItemsSubtotal = 0, pendingUpiCount = 0, unassignedCount = 0;
+      orderKeys.forEach(id => {
+        const o = state.orders[id];
+        if (o.status === 'DELIVERED') {
+          totalRevenue += Number(o.totalAmount || 0);
+          totalItemsSubtotal += (o.subtotalAmount !== undefined ? Number(o.subtotalAmount) : Number(o.totalAmount || 0));
+        }
+        if (o.paymentMode === 'UPI' && o.paymentStatus === 'PENDING_VERIFICATION' && o.status !== 'CANCELLED') pendingUpiCount++;
+        if (!o.deliveryUid && o.status !== 'DELIVERED' && o.status !== 'CANCELLED') unassignedCount++;
+      });
+
+      let totalRidersCash = 0;
+      Object.keys(state.deliveryPartners).forEach(uid => totalRidersCash += getRiderCashMetrics(uid).netCashInHand);
+      let totalStoresUnpaid = 0;
+      Object.keys(state.restaurants).forEach(uid => totalStoresUnpaid += getStorePayoutMetrics(uid).unpaidBalance);
+
+      document.getElementById('stat-orders').textContent = orderKeys.length;
+      document.getElementById('stat-revenue').textContent = '₹' + totalRevenue.toFixed(0);
+      document.getElementById('stat-admin-profit').textContent = '₹' + (totalItemsSubtotal * (commissionPercent / 100)).toFixed(0);
+      document.getElementById('stat-riders-cash').textContent = '₹' + totalRidersCash.toFixed(0);
+      document.getElementById('stat-stores-unpaid').textContent = '₹' + totalStoresUnpaid.toFixed(0);
+      document.getElementById('sidebar-upi-badge').textContent = pendingUpiCount;
+      document.getElementById('upi-pending-header-badge').textContent = `${pendingUpiCount} Pending`;
+
+      const unassignedBadge = document.getElementById('sidebar-unassigned-badge');
+      if (unassignedCount > 0) { unassignedBadge.style.display = 'inline-block'; unassignedBadge.textContent = unassignedCount; }
+      else { unassignedBadge.style.display = 'none'; }
+    }
+
+    // ORDERS (2/3 PER ROW + CANCEL + SPAM)
+    function getStatusBadge(status) {
+      const s = status || 'PLACED';
+      let badgeClass = 'badge-info';
+      if (s === 'DELIVERED') badgeClass = 'badge-success';
+      if (s === 'CANCELLED') badgeClass = 'badge-danger';
+      if (s === 'PREPARING' || s === 'PACKING' || s === 'READY_FOR_PICKUP') badgeClass = 'badge-warning';
+      return `<span class="badge ${badgeClass}">${s === 'PREPARING' ? 'PACKING' : s}</span>`;
+    }
+
+    function setOrderLayoutMode(mode) {
+      currentOrderLayout = mode;
+      document.getElementById('view-btn-3').className = mode === 'grid3' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline';
+      document.getElementById('view-btn-2').className = mode === 'grid2' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline';
+      document.getElementById('view-btn-table').className = mode === 'table' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline';
+      renderOrders();
+    }
+
+    function setOrderStatusFilter(status, el) {
+      currentStatusFilter = status;
+      el.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      renderOrders();
+    }
+
+    function filterOrdersList() { renderOrders(); }
+
+    function adminCancelOrder(orderId) {
+      const o = state.orders[orderId];
+      if (!o) return;
+      const reason = prompt(`Cancel Order #${orderId.slice(-6)}? Enter cancellation reason:`, "Cancelled by Admin");
+      if (!reason) return;
+
+      const updates = { status: 'CANCELLED', cancelledBy: 'ADMIN', cancelReason: sanitizeText(reason), updatedAt: Date.now() };
+      const isPaidOnline = (o.paymentMode === 'WALLET') || (o.paymentMode === 'UPI' && o.paymentStatus === 'VERIFIED');
+      if (isPaidOnline && o.customerUid && confirm(`Order #${orderId.slice(-6)} was paid online (₹${Number(o.totalAmount||0).toFixed(0)}). Auto-refund to Customer Wallet now?`)) {
+        updates.paymentStatus = 'REFUNDED';
+        db.ref(`customers/${o.customerUid}/walletBalance`).transaction(bal => Number(bal || 0) + Number(o.totalAmount || 0));
+        db.ref(`walletTransactions/${o.customerUid}`).push({
+          type: 'CREDIT', amount: Number(o.totalAmount || 0), note: `Refund for cancelled Order #${orderId.slice(-6)}`, createdAt: Date.now()
+        });
+      }
+
+      db.ref('orders/' + orderId).update(updates).then(() => showToast(`Order #${orderId.slice(-6)} Cancelled!`, 'danger'));
+    }
+
+    function renderOrders() {
+      const gridContainer = document.getElementById('orders-grid-container');
+      const tableContainer = document.getElementById('orders-table-container');
+      const tbody = document.getElementById('orders-table-body');
+      const query = (document.getElementById('order-search-input')?.value || '').toLowerCase();
+
+      let entries = Object.entries(state.orders).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+      if (currentStatusFilter === 'UNASSIGNED') entries = entries.filter(([_, o]) => !o.deliveryUid && o.status !== 'DELIVERED' && o.status !== 'CANCELLED');
+      else if (currentStatusFilter === 'SPAM') entries = entries.filter(([_, o]) => o.isSpamSuspect === true);
+      else if (currentStatusFilter !== 'ALL') entries = entries.filter(([_, o]) => (o.status || 'PLACED') === currentStatusFilter);
+
+      if (query) {
+        entries = entries.filter(([id, o]) => id.toLowerCase().includes(query) || (o.phone || '').includes(query) || (o.deliveryOtp || '').includes(query));
+      }
+
+      if (currentOrderLayout === 'table') {
+        gridContainer.style.display = 'none';
+        tableContainer.style.display = 'block';
+        tbody.innerHTML = '';
+        if (entries.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:2rem;">No matching orders found.</td></tr>`;
+          return;
+        }
+        entries.forEach(([orderId, o]) => {
+          const assignedBoy = (o.deliveryUid && state.deliveryPartners[o.deliveryUid]) ? escapeHtml(state.deliveryPartners[o.deliveryUid].name || 'Rider') : '<em>Unassigned</em>';
+          let payCol = `<span style="font-weight:700; color:var(--text-muted);">${escapeHtml(o.paymentMode || 'COD')}</span>`;
+          if (o.paymentMode === 'UPI') {
+            if (o.paymentStatus === 'VERIFIED') payCol = `<span class="badge badge-success">UPI Verified</span>`;
+            else if (o.paymentStatus === 'REFUNDED') payCol = `<span class="badge badge-info">Refunded</span>`;
+            else if (o.paymentStatus === 'REJECTED') payCol = `<span class="badge badge-danger">Rejected</span>`;
+            else payCol = `<span class="badge badge-danger" onclick="setUpiStatus('${orderId}', 'VERIFIED')" style="cursor:pointer;">Verify Now</span>`;
+          }
+          const spamTag = o.isSpamSuspect ? `<div><span class="badge badge-danger">🚨 SPAM</span></div>` : '';
+          const emergencyTag = o.emergencyAlert ? `<div><span class="badge badge-danger">⚠️ SOS</span></div>` : '';
+
+          tbody.innerHTML += `
+            <tr>
+              <td><strong>#${orderId.slice(-6)}</strong><br><small style="color:var(--text-muted)">${new Date(o.createdAt || Date.now()).toLocaleTimeString()}</small></td>
+              <td><strong>${escapeHtml(o.phone || 'N/A')}</strong><br><small style="color:var(--text-muted)">${escapeHtml((o.address || '').slice(0, 22))}...</small></td>
+              <td><strong>₹${Number(o.totalAmount || 0).toFixed(0)}</strong></td>
+              <td><span class="pin-chip">${escapeHtml(o.deliveryOtp || '----')}</span></td>
+              <td>${payCol}</td>
+              <td>${assignedBoy}</td>
+              <td>${getStatusBadge(o.status)}${spamTag}${emergencyTag}</td>
+              <td>
+                <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                  <button class="btn btn-info btn-sm" onclick="openOrderDetailModal('${orderId}')"><i class="fa-solid fa-eye"></i></button>
+                  <button class="btn btn-outline btn-sm" onclick="openAssignModal('${orderId}', '${o.deliveryUid || ''}')"><i class="fa-solid fa-user-plus"></i></button>
+                  ${o.status !== 'CANCELLED' && o.status !== 'DELIVERED' ? `<button class="btn btn-danger btn-sm" onclick="adminCancelOrder('${orderId}')"><i class="fa-solid fa-ban"></i></button>` : ''}
+                </div>
+              </td>
+            </tr>`;
+        });
+      } else {
+        tableContainer.style.display = 'none';
+        gridContainer.style.display = 'grid';
+        gridContainer.className = `orders-grid-multi ${currentOrderLayout === 'grid2' ? 'cols-2' : 'cols-3'}`;
+        gridContainer.innerHTML = '';
+
+        if (entries.length === 0) {
+          gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:2rem;">No matching orders found.</div>`;
+          return;
+        }
+
+        entries.forEach(([orderId, o]) => {
+          const storeName = state.restaurants[o.restaurantId]?.name || 'Store';
+          const riderName = o.deliveryUid && state.deliveryPartners[o.deliveryUid] ? state.deliveryPartners[o.deliveryUid].name : 'Unassigned';
+          const rawItems = Array.isArray(o.items) ? o.items : Object.values(o.items || {});
+          const itemsSummary = rawItems.slice(0, 3).map(i => `${i.qty}× ${escapeHtml(i.name)}`).join(', ') + (rawItems.length > 3 ? ` +${rawItems.length - 3} more` : '');
+
+          gridContainer.innerHTML += `
+            <div class="order-grid-card ${o.isSpamSuspect ? 'spam-flagged' : ''}">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border); padding-bottom:6px; margin-bottom:6px;">
+                  <div><strong style="font-size:0.98rem;">#${orderId.slice(-6)}</strong><div style="font-size:0.7rem; color:var(--text-muted);">${new Date(o.createdAt || Date.now()).toLocaleTimeString()}</div></div>
+                  <div style="text-align:right;">${getStatusBadge(o.status)}${o.isSpamSuspect ? `<div style="margin-top:2px;"><span class="badge badge-danger" style="font-size:0.6rem;">🚨 SPAM</span></div>` : ''}</div>
+                </div>
+                <div style="font-size:0.78rem; margin-bottom:4px;"><strong>🏪 ${escapeHtml(storeName)}</strong> • 📱 ${escapeHtml(o.phone || 'N/A')}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">📍 ${escapeHtml((o.address || '').slice(0, 42))}</div>
+                <div style="background:#090e1a; padding:6px 8px; border-radius:8px; font-size:0.74rem; color:#cbd5e1; margin-bottom:6px;">${itemsSummary || 'Items'}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem;">
+                  <span><strong style="color:var(--primary); font-size:0.96rem;">₹${Number(o.totalAmount || 0).toFixed(0)}</strong> (${escapeHtml(o.paymentMode || 'COD')})</span>
+                  <span class="pin-chip">${escapeHtml(o.deliveryOtp || '----')}</span>
+                </div>
+                <div style="font-size:0.73rem; color:#38bdf8; margin-top:4px;">🛵 ${escapeHtml(riderName)}</div>
+              </div>
+              <div style="display:flex; gap:6px; flex-wrap:wrap; border-top:1px solid var(--border); padding-top:8px;">
+                <button class="btn btn-info btn-sm" style="flex:1;" onclick="openOrderDetailModal('${orderId}')"><i class="fa-solid fa-eye"></i> View</button>
+                <button class="btn btn-outline btn-sm" onclick="openAssignModal('${orderId}', '${o.deliveryUid || ''}')"><i class="fa-solid fa-motorcycle"></i></button>
+                <button class="btn btn-outline btn-sm" onclick="printBillSlip('${orderId}')"><i class="fa-solid fa-print"></i></button>
+                ${o.status !== 'CANCELLED' && o.status !== 'DELIVERED' ? `<button class="btn btn-danger btn-sm" onclick="adminCancelOrder('${orderId}')"><i class="fa-solid fa-ban"></i> Cancel</button>` : ''}
+              </div>
+            </div>`;
+        });
+      }
+    }
+
+    function openOrderDetailModal(orderId) {
+      const o = state.orders[orderId];
+      if (!o) return;
+      const store = state.restaurants[o.restaurantId] || {};
+      const rider = o.deliveryUid ? (state.deliveryPartners[o.deliveryUid] || {}) : null;
+      const cust = o.customerUid ? (state.customers[o.customerUid] || {}) : {};
+      const rawItems = Array.isArray(o.items) ? o.items : Object.values(o.items || {});
+      const itemsHtml = rawItems.map(i => `<div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px dashed var(--border);"><span>${i.qty}× ${escapeHtml(i.name)}</span><strong>₹${(Number(i.price||0)*i.qty).toFixed(0)}</strong></div>`).join('');
+      const mapUrl = (o.customerLat && o.customerLng) ? `https://www.google.com/maps?q=${o.customerLat},${o.customerLng}` : (o.locationLink || '');
+      const liveRiderLat = o.riderLat || rider?.lat || null;
+      const liveRiderLng = o.riderLng || rider?.lng || null;
+      const riderMapUrl = (liveRiderLat && liveRiderLng) ? `https://www.google.com/maps?q=${liveRiderLat},${liveRiderLng}` : '';
+
+      document.getElementById('order-detail-body').innerHTML = `
+        ${o.isSpamSuspect ? `<div style="background:rgba(239,68,68,0.18); border:1px solid var(--danger); border-radius:12px; padding:0.75rem; margin-bottom:1rem; color:#fca5a5; font-size:0.82rem; font-weight:800;">🚨 AUTO-SPAM DETECTED: ${escapeHtml(o.spamReason || 'Suspicious pattern')}</div>` : ''}
+        <div class="detail-kv-grid">
+          <div class="detail-kv"><small>Order ID</small><strong>#${orderId.slice(-8)}</strong></div>
+          <div class="detail-kv"><small>Store</small><strong>${escapeHtml(store.name || o.restaurantId)}</strong></div>
+          <div class="detail-kv"><small>Customer</small><strong>${escapeHtml(cust.name || 'Customer')} • ${escapeHtml(o.phone || '')}</strong></div>
+          <div class="detail-kv"><small>Delivery PIN / Pickup</small><strong>PIN: ${escapeHtml(o.deliveryOtp || '-')} | Pickup: ${escapeHtml(o.pickupOtp || '-')}</strong></div>
+          <div class="detail-kv"><small>Payment & UTR</small><strong>${escapeHtml(o.paymentMode || 'COD')} (${escapeHtml(o.paymentStatus || '')}) ${o.transactionId ? 'UTR: ' + escapeHtml(o.transactionId) : ''}</strong></div>
+          <div class="detail-kv"><small>Assigned Rider & Live GPS</small><strong>${rider ? escapeHtml(rider.name + ' (' + (rider.phone || '') + ')') : 'Unassigned'}</strong>${riderMapUrl ? `<div style="margin-top:3px;"><a href="${riderMapUrl}" target="_blank" style="color:#34d399; font-size:0.76rem; font-weight:800;">🛵 Track Rider Live Map</a></div>` : ''}</div>
+        </div>
+        ${o.paymentScreenshot ? `<div style="margin-bottom:1rem;"><button class="btn btn-info btn-sm" onclick="openScreenshotByOrder('${orderId}')"><i class="fa-solid fa-image"></i> View Customer Payment Screenshot</button></div>` : ''}
+        <div class="detail-kv" style="margin-bottom:1rem;">
+          <small>Delivery Address & GPS</small>
+          <strong>${escapeHtml(o.address || 'N/A')}</strong>
+          ${mapUrl ? `<div style="margin-top:4px;"><a href="${mapUrl}" target="_blank" style="color:#38bdf8; font-size:0.8rem;">📍 Open Customer Google Maps</a></div>` : ''}
+        </div>
+        <div class="detail-kv" style="margin-bottom:1rem;">
+          <small>Ordered Items</small>
+          ${itemsHtml || '<em>No items</em>'}
+          <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:1rem; color:var(--primary);">
+            <strong>Total Payable:</strong><strong>₹${Number(o.totalAmount || 0).toFixed(2)}</strong>
+          </div>
+        </div>
+        <div style="background:#090e1a; border:1px solid var(--border); border-radius:14px; padding:1rem;">
+          <label style="font-size:0.75rem; font-weight:800; color:var(--warning); display:block; margin-bottom:6px;">ADMIN FORCE STATUS OVERRIDE</label>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <select id="admin-override-status" class="form-input" style="flex:1; min-width:180px;">
+              ${['PLACED','ACCEPTED','PREPARING','READY_FOR_PICKUP','PICKED_UP','OUT_FOR_DELIVERY','DELIVERED','CANCELLED'].map(st => `<option value="${st}" ${o.status === st ? 'selected' : ''}>${st}</option>`).join('')}
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="adminOverrideOrderStatus('${orderId}')">Update Status</button>
+            ${o.status !== 'CANCELLED' && o.status !== 'DELIVERED' ? `<button class="btn btn-danger btn-sm" onclick="closeModalById('orderDetailModal'); adminCancelOrder('${orderId}')">Cancel & Refund</button>` : ''}
+            ${o.emergencyAlert ? `<button class="btn btn-warning btn-sm" onclick="clearOrderEmergency('${orderId}')">Clear SOS</button>` : ''}
+          </div>
+        </div>`;
+      document.getElementById('orderDetailModal').classList.add('open');
+      window.history.pushState({ modal: 'orderDetail' }, '');
+    }
+
+    function adminOverrideOrderStatus(orderId) {
+      const newStatus = document.getElementById('admin-override-status').value;
+      const updates = { status: newStatus, updatedAt: Date.now() };
+      if (newStatus === 'CANCELLED') { updates.cancelledBy = 'ADMIN'; updates.cancelReason = 'Updated by Admin'; }
+      db.ref('orders/' + orderId).update(updates).then(() => {
+        closeModalById('orderDetailModal'); showToast(`Order #${orderId.slice(-6)} updated to ${newStatus}!`, 'success');
+      });
+    }
+
+    function clearOrderEmergency(orderId) {
+      db.ref('orders/' + orderId).update({ emergencyAlert: false, updatedAt: Date.now() }).then(() => {
+        closeModalById('orderDetailModal'); showToast('SOS Alert cleared.', 'info');
+      });
+    }
+
+    function renderUpiPayments() {
+      const tbody = document.getElementById('upi-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const upiOrders = Object.entries(state.orders).filter(([_, o]) => o.paymentMode === 'UPI').sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+      if (upiOrders.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No UPI transactions yet.</td></tr>`;
+        return;
+      }
+      upiOrders.forEach(([orderId, o]) => {
+        const payStatus = o.paymentStatus || 'PENDING_VERIFICATION';
+        let payBadge = `<span class="badge badge-warning">Pending Verification</span>`;
+        if (payStatus === 'VERIFIED') payBadge = `<span class="badge badge-success">Verified</span>`;
+        if (payStatus === 'REJECTED') payBadge = `<span class="badge badge-danger">Rejected</span>`;
+        if (payStatus === 'REFUNDED') payBadge = `<span class="badge badge-info">Refunded</span>`;
+        const ssHtml = o.paymentScreenshot ? `<button class="btn btn-info btn-sm" style="margin-top:4px; padding:2px 8px;" onclick="openScreenshotByOrder('${orderId}')"><i class="fa-solid fa-image"></i> View Screenshot</button>` : `<div style="font-size:0.7rem; color:var(--text-muted);">No screenshot</div>`;
+
+        let actionBtns = '';
+        if (payStatus === 'PENDING_VERIFICATION' && o.status !== 'CANCELLED') {
+          actionBtns = `<div style="display:flex; gap:6px;"><button class="btn btn-success btn-sm" onclick="setUpiStatus('${orderId}', 'VERIFIED')">Verify</button><button class="btn btn-danger btn-sm" onclick="setUpiStatus('${orderId}', 'REJECTED')">Reject</button></div>`;
+        } else if (o.status === 'CANCELLED' && payStatus === 'VERIFIED') {
+          actionBtns = `<button class="btn btn-info btn-sm" onclick="markUpiRefunded('${orderId}')">Mark Refunded</button>`;
+        }
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>#${orderId.slice(-6)}</strong><div>${getStatusBadge(o.status)}</div></td>
+            <td>${escapeHtml(o.phone || 'N/A')}</td>
+            <td><strong style="color:var(--primary);">₹${Number(o.totalAmount || 0).toFixed(2)}</strong></td>
+            <td><code style="color:#38bdf8; font-weight:800;">${escapeHtml(o.transactionId || 'N/A')}</code><div>${ssHtml}</div></td>
+            <td>${payBadge}</td>
+            <td>${actionBtns || '<small style="color:var(--text-muted);">No action needed</small>'}</td>
+          </tr>`;
+      });
+    }
+
+    function markUpiRefunded(orderId) {
+      db.ref('orders/' + orderId).update({ paymentStatus: 'REFUNDED', updatedAt: Date.now() }).then(() => showToast('Marked as UPI Refunded!', 'info'));
+    }
+
+    function setUpiStatus(orderId, newStatus) {
+      const updates = { paymentStatus: newStatus, updatedAt: Date.now() };
+      if (newStatus === 'REJECTED') {
+        updates.status = 'CANCELLED'; updates.cancelledBy = 'ADMIN_FRAUD_CHECK'; updates.cancelReason = 'Fake or Invalid UPI UTR Rejected';
+      }
+      db.ref('orders/' + orderId).update(updates).then(() => {
+        showToast(newStatus === 'VERIFIED' ? '✅ UPI Verified! Dispatch unlocked.' : '❌ Fake UPI Rejected!', newStatus === 'VERIFIED' ? 'success' : 'danger');
+      });
+    }
+
+    // WALLET REQUESTS & FEEDBACKS
+    function renderWalletRequests() {
+      const tbody = document.getElementById('wallet-requests-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const entries = Object.entries(state.walletRequests).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+      let pendingCount = 0;
+
+      entries.forEach(([reqId, r]) => {
+        if (r.status === 'PENDING') pendingCount++;
+        const isDep = r.type === 'DEPOSIT';
+        const ssBtn = r.screenshot ? `<button class="btn btn-info btn-sm" style="margin-top:4px; padding:2px 8px;" onclick="openWalletScreenshot('${reqId}')"><i class="fa-solid fa-image"></i> Proof</button>` : '';
+        let statusBadge = `<span class="badge badge-warning">Pending</span>`;
+        if (r.status === 'APPROVED') statusBadge = `<span class="badge badge-success">Approved</span>`;
+        if (r.status === 'REJECTED') statusBadge = `<span class="badge badge-danger">Rejected</span>`;
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${escapeHtml(r.customerName || 'Customer')}</strong><div style="font-size:0.74rem; color:var(--text-muted);">${escapeHtml(r.customerPhone || '')}</div></td>
+            <td><span class="badge ${isDep ? 'badge-success' : 'badge-info'}">${isDep ? 'DEPOSIT' : 'WITHDRAW'}</span></td>
+            <td><strong style="color:#fbbf24; font-size:1rem;">₹${Number(r.amount || 0).toFixed(0)}</strong></td>
+            <td><code>${escapeHtml(r.utr || r.upiId || '-')}</code><div>${ssBtn}</div></td>
+            <td>${statusBadge}</td>
+            <td>
+              ${r.status === 'PENDING' ? `<div style="display:flex; gap:6px;"><button class="btn btn-success btn-sm" onclick="processWalletRequest('${reqId}', true)">Approve</button><button class="btn btn-danger btn-sm" onclick="processWalletRequest('${reqId}', false)">Reject</button></div>` : '<small style="color:var(--text-muted);">Processed</small>'}
+            </td>
+          </tr>`;
+      });
+
+      document.getElementById('sidebar-wallet-badge').textContent = pendingCount;
+      document.getElementById('wallet-pending-header-badge').textContent = `${pendingCount} Pending`;
+      if (entries.length === 0) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No wallet requests yet.</td></tr>`;
+    }
+
+    function openWalletScreenshot(reqId) {
+      const r = state.walletRequests[reqId];
+      if (!r || !r.screenshot) return;
+      openScreenshotViewer(r.screenshot, `Wallet ${r.type} • ${r.customerName || ''} • ₹${r.amount}`);
+    }
+
+    function processWalletRequest(reqId, approve) {
+      const r = state.walletRequests[reqId];
+      if (!r || r.status !== 'PENDING') return;
+      if (!approve) {
+        if (r.type === 'WITHDRAW') {
+          db.ref(`customers/${r.customerUid}/walletBalance`).transaction(bal => Number(bal || 0) + Number(r.amount || 0));
+          db.ref(`walletTransactions/${r.customerUid}`).push({ type: 'CREDIT', amount: Number(r.amount || 0), note: 'Withdrawal rejected - refunded to wallet', createdAt: Date.now() });
+        }
+        db.ref(`walletRequests/${reqId}`).update({ status: 'REJECTED', updatedAt: Date.now() }).then(() => showToast('Wallet request rejected.', 'danger'));
+        return;
+      }
+      if (r.type === 'DEPOSIT') {
+        db.ref(`customers/${r.customerUid}/walletBalance`).transaction(bal => Number(bal || 0) + Number(r.amount || 0));
+        db.ref(`walletTransactions/${r.customerUid}`).push({ type: 'CREDIT', amount: Number(r.amount || 0), note: `Wallet Deposit Approved (UTR: ${r.utr || ''})`, createdAt: Date.now() });
+      }
+      db.ref(`walletRequests/${reqId}`).update({ status: 'APPROVED', updatedAt: Date.now() }).then(() => showToast(`✅ Wallet ${r.type} of ₹${r.amount} approved!`, 'success'));
+    }
+
+    function setFeedbackFilter(filter, el) {
+      currentFeedbackFilter = filter;
+      el.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      renderFeedbacks();
+    }
+
+    function renderFeedbacks() {
+      const tbody = document.getElementById('feedbacks-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const entries = Object.entries(state.feedbacks).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+      let openCount = 0;
+      entries.forEach(([_, f]) => { if (f.status !== 'RESOLVED') openCount++; });
+      document.getElementById('sidebar-feedback-badge').textContent = openCount;
+
+      let filtered = entries;
+      if (currentFeedbackFilter === 'OPEN') filtered = entries.filter(([_, f]) => f.status !== 'RESOLVED');
+      else if (currentFeedbackFilter !== 'ALL') filtered = entries.filter(([_, f]) => f.role === currentFeedbackFilter);
+
+      if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No feedback tickets found.</td></tr>`; return; }
+
+      filtered.forEach(([id, f]) => {
+        const isResolved = f.status === 'RESOLVED';
+        const roleBadge = f.role === 'RIDER' ? 'badge-info' : (f.role === 'STORE' ? 'badge-warning' : 'badge-success');
+        tbody.innerHTML += `
+          <tr>
+            <td><span class="badge ${roleBadge}">${escapeHtml(f.role || 'USER')}</span><div style="margin-top:3px;"><strong>${escapeHtml(f.name || 'User')}</strong></div><small style="color:var(--text-muted);">${escapeHtml(f.phone || '')}</small></td>
+            <td><strong>${escapeHtml(f.subject || 'General')}</strong>${f.rating ? `<div style="color:#fbbf24; font-size:0.78rem;">${'★'.repeat(Number(f.rating))}</div>` : ''}</td>
+            <td><div style="max-width:250px; font-size:0.8rem; color:#cbd5e1;">${escapeHtml(f.message || '')}</div></td>
+            <td><small style="color:#38bdf8;">${escapeHtml(f.adminReply || '-')}</small></td>
+            <td>${isResolved ? '<span class="badge badge-success">Resolved</span>' : '<span class="badge badge-warning">Open</span>'}</td>
+            <td><button class="btn btn-primary btn-sm" onclick="replyAndResolveFeedback('${id}')">${isResolved ? 'Update Reply' : 'Reply & Resolve'}</button></td>
+          </tr>`;
+      });
+    }
+
+    function replyAndResolveFeedback(id) {
+      const f = state.feedbacks[id] || {};
+      const reply = prompt('Enter Admin Reply / Resolution Note:', f.adminReply || 'Thank you for your feedback! Issue resolved.');
+      if (reply === null) return;
+      db.ref(`feedbacks/${id}`).update({ adminReply: sanitizeText(reply), status: 'RESOLVED', resolvedAt: Date.now() }).then(() => showToast('Feedback marked Resolved!', 'success'));
+    }
+
+    // NEAREST TO STORE DISPATCH ENGINE
+    function autoAssignAllPendingOrders() {
+      const pendingOrders = Object.entries(state.orders).filter(([_, o]) => !o.deliveryUid && o.status !== 'DELIVERED' && o.status !== 'CANCELLED');
+      if (pendingOrders.length === 0) { showToast('No unassigned orders found!', 'info'); return; }
+      const onlineRiders = Object.entries(state.deliveryPartners).filter(([_, r]) => r.approved === true && r.online === true && r.suspended !== true);
+      if (onlineRiders.length === 0) { showToast('No online approved riders available!', 'danger'); return; }
+
+      let assignedCount = 0, skippedCount = 0;
+      pendingOrders.forEach(([orderId, o]) => {
+        const store = state.restaurants[o.restaurantId] || {};
+        const storeLat = Number(store.lat) || 26.4524;
+        const storeLng = Number(store.lng) || 89.9723;
+        const eligibleRiders = onlineRiders.filter(([uid, _]) => !(o.rejectedByRiders && o.rejectedByRiders[uid]));
+        if (eligibleRiders.length === 0) { skippedCount++; return; }
+
+        let bestRiderUid = null, minDistance = Infinity, fallbackUid = null;
+        eligibleRiders.forEach(([uid, rider]) => {
+          const rLat = Number(rider.lat), rLng = Number(rider.lng);
+          if (Number.isFinite(rLat) && Number.isFinite(rLng) && rLat !== 0 && rLng !== 0) {
+            const dist = calculateDistanceKm(storeLat, storeLng, rLat, rLng);
+            if (dist < minDistance) { minDistance = dist; bestRiderUid = uid; }
+          } else if (!fallbackUid) {
+            fallbackUid = uid;
+          }
+        });
+        if (!bestRiderUid) bestRiderUid = fallbackUid;
+        const bestRider = bestRiderUid ? state.deliveryPartners[bestRiderUid] : null;
+
+        db.ref('orders/' + orderId).update({
+          deliveryUid: bestRiderUid,
+          riderLat: bestRider?.lat || null,
+          riderLng: bestRider?.lng || null,
+          assignedAt: Date.now(),
+          riderAccepted: null,
+          updatedAt: Date.now()
+        });
+        assignedCount++;
+      });
+
+      if (assignedCount > 0) showToast(`⚡ ${assignedCount} orders dispatched to nearest riders near store!`, 'success');
+      if (skippedCount > 0) showToast(`⚠️ ${skippedCount} order(s) skipped (passed by riders).`, 'warning');
+    }
+
+    function openAssignModal(orderId, currentDeliveryUid) {
+      const order = state.orders[orderId] || {};
+      const store = state.restaurants[order.restaurantId] || {};
+      const storeLat = Number(store.lat) || 26.4524;
+      const storeLng = Number(store.lng) || 89.9723;
+
+      document.getElementById('modal-order-id').value = orderId;
+      document.getElementById('modal-order-label').textContent = `Order: #${orderId.slice(-6)} (${store.name || 'Store'})`;
+      const rejectionBox = document.getElementById('modal-rejected-riders-box');
+      if (order.rejectedByRiders && Object.keys(order.rejectedByRiders).length > 0) {
+        let text = `<strong>⚠️ Previously Passed By:</strong><br>`;
+        Object.entries(order.rejectedByRiders).forEach(([_, log]) => { text += `• ${escapeHtml(log.riderName || 'Rider')}: ${escapeHtml(log.reason || 'Declined')}<br>`; });
+        rejectionBox.innerHTML = text; rejectionBox.style.display = 'block';
+      } else { rejectionBox.style.display = 'none'; }
+
+      const sortedRiders = Object.entries(state.deliveryPartners).map(([uid, partner]) => {
+        const rLat = Number(partner.lat), rLng = Number(partner.lng);
+        const dist = (Number.isFinite(rLat) && Number.isFinite(rLng) && rLat !== 0 && rLng !== 0)
+          ? calculateDistanceKm(storeLat, storeLng, rLat, rLng) : Infinity;
+        return { uid, partner, dist };
+      }).sort((a, b) => a.dist - b.dist);
+
+      const select = document.getElementById('modal-delivery-select');
+      select.innerHTML = '<option value="">-- Choose Rider --</option>';
+      sortedRiders.forEach(({ uid, partner, dist }) => {
+        const isSelected = uid === currentDeliveryUid ? 'selected' : '';
+        const onlineTag = partner.online ? '🟢 Online' : '🔴 Offline';
+        const distTag = Number.isFinite(dist) ? ` • ${dist.toFixed(1)} km from store` : '';
+        const hasPassed = (order.rejectedByRiders && order.rejectedByRiders[uid]) ? ' [⚠️ PASSED]' : '';
+        select.innerHTML += `<option value="${uid}" ${isSelected}>${escapeHtml(partner.name || 'Rider')} (${onlineTag}${distTag})${hasPassed}</option>`;
+      });
+      document.getElementById('assignModal').classList.add('open');
+    }
+
+    function closeAssignModal() { document.getElementById('assignModal').classList.remove('open'); }
+
+    function confirmDeliveryAssignment() {
+      const orderId = document.getElementById('modal-order-id').value;
+      const partnerUid = document.getElementById('modal-delivery-select').value;
+      if (!orderId || !partnerUid) return;
+      const rider = state.deliveryPartners[partnerUid];
+      db.ref('orders/' + orderId).update({
+        deliveryUid: partnerUid,
+        riderLat: rider?.lat || null,
+        riderLng: rider?.lng || null,
+        assignedAt: Date.now(),
+        riderAccepted: null,
+        updatedAt: Date.now()
+      }).then(() => { closeAssignModal(); showToast('Rider assigned!', 'success'); });
+    }
+
+    // DISBURSAL ENGINE
+    function openDisbursalByRef(type, targetId) {
+      let name = 'Recipient', phone = '', upiId = '', amount = 0;
+      if (type === 'RIDER') { const p = state.riderPayouts[targetId]; if (!p) return; name = p.riderName || 'Rider'; phone = p.riderPhone || ''; upiId = p.riderUpiId || ''; amount = Number(p.amount || 0); }
+      else if (type === 'STORE') { const p = state.storePayouts[targetId]; if (!p) return; name = p.storeName || 'Store'; phone = p.storePhone || ''; upiId = p.storeUpiId || ''; amount = Number(p.amount || 0); }
+      else if (type === 'DIRECT_STORE') { const s = state.restaurants[targetId]; if (!s) return; const m = getStorePayoutMetrics(targetId); name = s.name || 'Store'; phone = s.phone || ''; upiId = s.upiId || ''; amount = m.unpaidBalance; }
+      openDisbursalModal(type, targetId, name, phone, upiId, amount);
+    }
+
+    function openDisbursalModal(type, targetId, name, phone, upiId, amount) {
+      document.getElementById('disbursal-target-type').value = type;
+      document.getElementById('disbursal-target-id').value = targetId;
+      document.getElementById('disbursal-raw-amount').value = amount;
+      document.getElementById('disbursal-raw-upi').value = upiId || '';
+      const typeBadge = document.getElementById('disbursal-type-badge');
+      if (type === 'RIDER') { typeBadge.className = 'badge badge-info'; typeBadge.textContent = '🛵 RIDER EARNINGS'; }
+      else { typeBadge.className = 'badge badge-warning'; typeBadge.style.background = 'rgba(192, 132, 252, 0.2)'; typeBadge.style.color = '#c084fc'; typeBadge.textContent = '🏪 STORE PAYOUT'; }
+      document.getElementById('disbursal-recipient-name').textContent = name || 'Recipient';
+      document.getElementById('disbursal-recipient-phone').textContent = phone || 'No Phone';
+      document.getElementById('disbursal-amount-display').textContent = `₹${Number(amount || 0).toFixed(2)}`;
+      document.getElementById('disbursal-upi-display').textContent = upiId || 'Not Set (Pay Cash)';
+      document.getElementById('disbursal-utr-input').value = '';
+      const upiString = `upi://pay?pa=${encodeURIComponent(upiId || 'recipient@upi')}&pn=${encodeURIComponent(name || 'Partner')}&am=${Number(amount || 0).toFixed(2)}&cu=INR`;
+      document.getElementById('disbursal-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiString)}`;
+      document.getElementById('disbursal-upi-intent-link').href = upiString;
+      selectDisbursalMode('UPI');
+      document.getElementById('adminDisbursalModal').classList.add('open');
+      window.history.pushState({ modal: 'disbursal' }, '');
+    }
+
+    function closeDisbursalModal() { document.getElementById('adminDisbursalModal').classList.remove('open'); }
+
+    function selectDisbursalMode(mode) {
+      currentDisbursalMode = mode;
+      document.getElementById('btn-disburse-mode-upi').className = mode === 'UPI' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+      document.getElementById('btn-disburse-mode-cash').className = mode === 'CASH' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+      document.getElementById('disbursal-upi-section').style.display = mode === 'UPI' ? 'block' : 'none';
+      document.getElementById('disbursal-cash-section').style.display = mode === 'CASH' ? 'block' : 'none';
+    }
+
+    function copyDisbursalAmount() { copyToClipboard(document.getElementById('disbursal-raw-amount').value, 'Payout Amount'); }
+    function copyDisbursalUpi() { const u = document.getElementById('disbursal-raw-upi').value; if (!u) return showToast('No UPI ID!', 'warning'); copyToClipboard(u, 'UPI ID'); }
+
+    function confirmDisbursalSuccess() {
+      const type = document.getElementById('disbursal-target-type').value;
+      const targetId = document.getElementById('disbursal-target-id').value;
+      const rawAmt = Number(document.getElementById('disbursal-raw-amount').value || 0);
+      let utr = document.getElementById('disbursal-utr-input').value.trim();
+
+      if (currentDisbursalMode === 'UPI') {
+        if (!/^\d{12}$/.test(utr)) { showToast('⚠️ Exact 12-Digit UTR Number enter karein!', 'danger'); return; }
+      } else { utr = utr ? `CASH_PAID_${utr}` : `OFFICE_CASH_${Date.now().toString().slice(-6)}`; }
+
+      if (type === 'RIDER') {
+        db.ref('riderPayouts/' + targetId).update({ status: 'PAID', adminRef: utr, mode: currentDisbursalMode, updatedAt: Date.now() })
+          .then(() => { closeDisbursalModal(); showToast(`🎉 ₹${rawAmt.toFixed(0)} Rider Payout settled!`, 'success'); });
+      } else if (type === 'STORE') {
+        db.ref('storePayouts/' + targetId).update({ status: 'PAID', adminRef: utr, mode: currentDisbursalMode, updatedAt: Date.now() })
+          .then(() => { closeDisbursalModal(); showToast(`🎉 ₹${rawAmt.toFixed(0)} Store Payout settled!`, 'success'); });
+      } else if (type === 'DIRECT_STORE') {
+        const store = state.restaurants[targetId] || {};
+        db.ref('storePayouts').push({ storeId: targetId, storeName: store.name || 'Store', storePhone: store.phone || '', storeUpiId: store.upiId || 'CASH', amount: Number(rawAmt.toFixed(2)), status: 'PAID', adminRef: utr, mode: currentDisbursalMode, createdAt: Date.now() })
+          .then(() => { closeDisbursalModal(); showToast(`🎉 ₹${rawAmt.toFixed(0)} direct payout settled!`, 'success'); });
+      }
+    }
+
+    // PAYOUTS, STORES, RIDERS, CUSTOMERS
+    function renderRiderPayouts() {
+      const tbody = document.getElementById('rider-payouts-table-body'); tbody.innerHTML = '';
+      const entries = Object.entries(state.riderPayouts).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+      let pendingCount = 0;
+      entries.forEach(([id, p]) => {
+        if (p.status === 'PENDING') pendingCount++;
+        const isPaid = p.status === 'PAID';
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${escapeHtml(p.riderName || 'Rider')}</strong><div style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(p.riderPhone || '')}</div></td>
+            <td><strong style="color:#38bdf8; font-size:1rem;">₹${Number(p.amount || 0).toFixed(2)}</strong></td>
+            <td><code style="color:#38bdf8; font-weight:800;">${escapeHtml(p.riderUpiId || 'Not Set')}</code></td>
+            <td><small>${new Date(p.createdAt).toLocaleDateString()}</small></td>
+            <td><code>${escapeHtml(p.adminRef || '-')}</code></td>
+            <td>${isPaid ? '<span class="badge badge-success">✅ Paid</span>' : (p.status === 'REJECTED' ? '<span class="badge badge-danger">Rejected</span>' : '<span class="badge badge-warning">Pending</span>')}</td>
+            <td>${!isPaid && p.status !== 'REJECTED' ? `<div style="display:flex; gap:6px;"><button class="btn btn-primary btn-sm" onclick="openDisbursalByRef('RIDER', '${id}')"><i class="fa-solid fa-qrcode"></i> Pay</button><button class="btn btn-danger btn-sm" onclick="db.ref('riderPayouts/${id}').update({status:'REJECTED'})">Reject</button></div>` : ''}</td>
+          </tr>`;
+      });
+      document.getElementById('sidebar-rider-payout-badge').textContent = pendingCount;
+      document.getElementById('rider-payout-header-badge').textContent = `${pendingCount} Pending`;
+      if (entries.length === 0) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No rider payout requests.</td></tr>`;
+    }
+
+    function renderStorePayouts() {
+      const tbody = document.getElementById('store-payouts-table-body'); tbody.innerHTML = '';
+      const entries = Object.entries(state.storePayouts).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+      let pendingCount = 0;
+      entries.forEach(([id, p]) => {
+        if (p.status === 'PENDING') pendingCount++;
+        const isPaid = p.status === 'PAID';
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${escapeHtml(p.storeName || 'Store')}</strong><div style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(p.storePhone || '')}</div></td>
+            <td><strong style="color:#c084fc; font-size:1rem;">₹${Number(p.amount || 0).toFixed(2)}</strong></td>
+            <td><code>${escapeHtml(p.storeUpiId || 'Not Set')}</code></td>
+            <td><small>${new Date(p.createdAt).toLocaleDateString()}</small></td>
+            <td><code>${escapeHtml(p.adminRef || '-')}</code></td>
+            <td>${isPaid ? '<span class="badge badge-success">✅ Paid</span>' : (p.status === 'REJECTED' ? '<span class="badge badge-danger">Rejected</span>' : '<span class="badge badge-warning">Pending</span>')}</td>
+            <td>${!isPaid && p.status !== 'REJECTED' ? `<div style="display:flex; gap:6px;"><button class="btn btn-primary btn-sm" style="background:#a855f7;" onclick="openDisbursalByRef('STORE', '${id}')"><i class="fa-solid fa-qrcode"></i> Pay</button><button class="btn btn-danger btn-sm" onclick="db.ref('storePayouts/${id}').update({status:'REJECTED'})">Reject</button></div>` : ''}</td>
+          </tr>`;
+      });
+      document.getElementById('sidebar-store-payout-badge').textContent = pendingCount;
+      document.getElementById('store-payout-header-badge').textContent = `${pendingCount} Pending`;
+      if (entries.length === 0) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No store payout requests.</td></tr>`;
+    }
+
+    function renderStores() {
+      const tbody = document.getElementById('stores-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const query = (document.getElementById('store-admin-search')?.value || '').toLowerCase();
+      let entries = Object.entries(state.restaurants);
+      if (query) entries = entries.filter(([_, s]) => (s.name || '').toLowerCase().includes(query) || (s.phone || '').includes(query));
+      if (entries.length === 0) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No stores found.</td></tr>`; return; }
+
+      entries.forEach(([uid, store]) => {
+        const metrics = getStorePayoutMetrics(uid);
+        const itemCount = Object.keys(state.menus[uid] || {}).length;
+        const mapLink = (store.lat && store.lng) ? `<a href="https://www.google.com/maps?q=${store.lat},${store.lng}" target="_blank" style="color:#38bdf8; font-size:0.74rem; text-decoration:none;"><i class="fa-solid fa-location-dot"></i> Map</a>` : '<small style="color:var(--text-muted);">No GPS</small>';
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${escapeHtml(store.name || 'Store')}</strong><div style="font-size:0.74rem; color:var(--text-muted);">${escapeHtml(store.cuisine || '')}</div>${mapLink}</td>
+            <td>${escapeHtml(store.phone || 'N/A')}<div style="font-size:0.74rem; color:#38bdf8;">UPI: ${escapeHtml(store.upiId || 'Not Set')}</div></td>
+            <td>${store.isOpen !== false ? '<span class="badge badge-success">Open</span>' : '<span class="badge badge-danger">Closed</span>'}<div style="font-size:0.74rem; color:var(--text-muted); margin-top:3px;">${itemCount} Products</div></td>
+            <td>₹${metrics.grossSales.toFixed(0)}</td>
+            <td><strong style="color:#c084fc; font-size:1rem;">₹${metrics.unpaidBalance.toFixed(2)}</strong></td>
+            <td>${store.suspended ? '<span class="badge badge-danger">Suspended</span>' : (store.approved ? '<span class="badge badge-success">Approved</span>' : '<span class="badge badge-warning">Pending</span>')}</td>
+            <td>
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                <button class="btn btn-info btn-sm" onclick="openStoreManageModal('${uid}')"><i class="fa-solid fa-sliders"></i> Manage & Catalog</button>
+                ${metrics.unpaidBalance > 0 ? `<button class="btn btn-primary btn-sm" style="background:#a855f7;" onclick="openDisbursalByRef('DIRECT_STORE', '${uid}')"><i class="fa-solid fa-qrcode"></i> Pay Store</button>` : ''}
+                <button class="btn ${store.approved ? 'btn-danger' : 'btn-success'} btn-sm" onclick="db.ref('restaurants/${uid}').update({approved: ${!store.approved}})">${store.approved ? 'Revoke' : 'Approve'}</button>
+              </div>
+            </td>
+          </tr>`;
+      });
+    }
+
+    function openStoreManageModal(storeUid) {
+      const store = state.restaurants[storeUid];
+      if (!store) return;
+      currentEditingStoreId = storeUid;
+      const metrics = getStorePayoutMetrics(storeUid);
+      document.getElementById('store-manage-summary').innerHTML = `
+        <div class="detail-kv"><small>Store UID</small><strong>${storeUid.slice(0,12)}...</strong></div>
+        <div class="detail-kv"><small>Email</small><strong>${escapeHtml(store.email || 'N/A')}</strong></div>
+        <div class="detail-kv"><small>Delivered Orders / Gross</small><strong>${metrics.orderCount} Orders • ₹${metrics.grossSales.toFixed(0)}</strong></div>
+        <div class="detail-kv"><small>Paid / Net Dues</small><strong>Paid ₹${metrics.totalPaidToStore.toFixed(0)} • Due ₹${metrics.unpaidBalance.toFixed(2)}</strong></div>`;
+
+      document.getElementById('edit-store-uid').value = storeUid;
+      document.getElementById('edit-store-name').value = store.name || '';
+      document.getElementById('edit-store-phone').value = store.phone || '';
+      document.getElementById('edit-store-cuisine').value = store.cuisine || '';
+      document.getElementById('edit-store-upi').value = store.upiId || '';
+      document.getElementById('edit-store-hours').value = store.hours || '';
+      document.getElementById('edit-store-image').value = store.imageUrl || '';
+      document.getElementById('edit-store-lat').value = store.lat || 26.4524;
+      document.getElementById('edit-store-lng').value = store.lng || 89.9723;
+      document.getElementById('edit-store-address').value = store.address || '';
+      document.getElementById('edit-store-note').value = store.adminNote || '';
+      document.getElementById('edit-store-approved').checked = store.approved === true;
+      document.getElementById('edit-store-open').checked = store.isOpen !== false;
+      document.getElementById('edit-store-suspended').checked = store.suspended === true;
+
+      renderStoreCatalogInModal(storeUid);
+      document.getElementById('storeManageModal').classList.add('open');
+      window.history.pushState({ modal: 'storeManage' }, '');
+    }
+
+    document.getElementById('store-manage-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const uid = document.getElementById('edit-store-uid').value;
+      const lat = Number(document.getElementById('edit-store-lat').value || 26.4524);
+      const lng = Number(document.getElementById('edit-store-lng').value || 89.9723);
+      db.ref('restaurants/' + uid).update({
+        name: sanitizeText(document.getElementById('edit-store-name').value.trim()),
+        phone: document.getElementById('edit-store-phone').value.trim(),
+        cuisine: sanitizeText(document.getElementById('edit-store-cuisine').value.trim()),
+        upiId: document.getElementById('edit-store-upi').value.trim(),
+        hours: sanitizeText(document.getElementById('edit-store-hours').value.trim()),
+        imageUrl: document.getElementById('edit-store-image').value.trim(),
+        lat, lng, locationLink: `https://www.google.com/maps?q=${lat},${lng}`,
+        address: sanitizeText(document.getElementById('edit-store-address').value.trim()),
+        adminNote: sanitizeText(document.getElementById('edit-store-note').value.trim()),
+        approved: document.getElementById('edit-store-approved').checked,
+        isOpen: document.getElementById('edit-store-open').checked,
+        suspended: document.getElementById('edit-store-suspended').checked
+      }).then(() => showToast('Store profile updated by Admin!', 'success'));
+    });
+
+    function renderStoreCatalogInModal(storeUid) {
+      const tbody = document.getElementById('store-manage-catalog-tbody');
+      if (!tbody) return;
+      const entries = Object.entries(state.menus[storeUid] || {});
+      tbody.innerHTML = '';
+      if (entries.length === 0) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No products yet.</td></tr>`; return; }
+      entries.forEach(([itemId, item]) => {
+        const isAvail = item.available !== false;
+        const isApproved = item.adminApproved === true;
+        const ratingTxt = item.ratingCount ? `⭐ ${Number(item.ratingAvg || 5).toFixed(1)} (${item.ratingCount})` : 'No ratings';
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${escapeHtml(item.name)}</strong><div style="font-size:0.72rem; color:#fbbf24;">${ratingTxt}</div></td>
+            <td>₹${Number(item.price || 0).toFixed(0)} ${item.mrp ? `<small style="text-decoration:line-through; color:var(--text-muted);">₹${item.mrp}</small>` : ''}</td>
+            <td><button class="btn btn-sm ${isApproved ? 'btn-success' : 'btn-warning'}" onclick="verifyStoreProduct('${storeUid}', '${itemId}', ${!isApproved})">${isApproved ? '✅ Live' : '⏳ Approve'}</button></td>
+            <td><button class="btn btn-sm ${isAvail ? 'btn-success' : 'btn-danger'}" onclick="db.ref('menus/${storeUid}/${itemId}').update({available: ${!isAvail}})">${isAvail ? 'In Stock' : 'Out'}</button></td>
+            <td><div style="display:flex; gap:4px;"><button class="btn btn-outline btn-sm" onclick="openAdminProductFormModal('${itemId}')"><i class="fa-solid fa-pen"></i></button><button class="btn btn-danger btn-sm" onclick="deleteStoreProductAsAdmin('${storeUid}', '${itemId}')"><i class="fa-solid fa-trash"></i></button></div></td>
+          </tr>`;
+      });
+    }
+
+    function openAdminProductFormModal(itemId = '') {
+      const storeUid = currentEditingStoreId; if (!storeUid) return;
+      document.getElementById('admin-prod-store-id').value = storeUid;
+      document.getElementById('admin-prod-item-id').value = itemId;
+      if (itemId && state.menus[storeUid]?.[itemId]) {
+        const item = state.menus[storeUid][itemId];
+        document.getElementById('admin-prod-modal-title').textContent = 'Edit Store Product';
+        document.getElementById('admin-prod-name').value = item.name || '';
+        document.getElementById('admin-prod-price').value = item.price || '';
+        document.getElementById('admin-prod-mrp').value = item.mrp || '';
+        document.getElementById('admin-prod-category').value = item.category || '';
+        document.getElementById('admin-prod-keywords').value = item.searchKeywords || '';
+        document.getElementById('admin-prod-desc').value = item.description || '';
+        document.getElementById('admin-prod-img').value = item.imageUrl || '';
+        document.getElementById('admin-prod-avail').checked = item.available !== false;
+        document.getElementById('admin-prod-approved').checked = item.adminApproved === true;
+      } else {
+        document.getElementById('admin-prod-modal-title').textContent = 'Add Store Product';
+        document.getElementById('admin-product-form').reset();
+        document.getElementById('admin-prod-store-id').value = storeUid;
+        document.getElementById('admin-prod-item-id').value = '';
+        document.getElementById('admin-prod-avail').checked = true;
+        document.getElementById('admin-prod-approved').checked = true;
+      }
+      document.getElementById('adminProductModal').classList.add('open');
+      window.history.pushState({ modal: 'adminProd' }, '');
+    }
+
+    document.getElementById('admin-product-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const storeUid = document.getElementById('admin-prod-store-id').value;
+      const itemId = document.getElementById('admin-prod-item-id').value;
+      const price = Number(document.getElementById('admin-prod-price').value);
+      const mrp = Number(document.getElementById('admin-prod-mrp').value || 0);
+      const approved = document.getElementById('admin-prod-approved').checked;
+
+      const payload = {
+        name: sanitizeText(document.getElementById('admin-prod-name').value.trim()),
+        price, mrp: mrp > price ? mrp : 0,
+        discountPercent: mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0,
+        category: sanitizeText(document.getElementById('admin-prod-category').value.trim().toUpperCase()),
+        searchKeywords: sanitizeText(document.getElementById('admin-prod-keywords').value.trim()),
+        description: sanitizeText(document.getElementById('admin-prod-desc').value.trim()),
+        imageUrl: document.getElementById('admin-prod-img').value.trim() || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&auto=format&fit=crop&q=60',
+        available: document.getElementById('admin-prod-avail').checked,
+        adminApproved: approved, approvalStatus: approved ? 'APPROVED' : 'PENDING'
+      };
+      if (itemId) {
+        db.ref(`menus/${storeUid}/${itemId}`).update(payload).then(() => { closeModalById('adminProductModal'); showToast('Product updated!', 'success'); });
+      } else {
+        db.ref(`menus/${storeUid}`).push(payload).then(() => { closeModalById('adminProductModal'); showToast('Product added!', 'success'); });
+      }
+    });
+
+    function deleteStoreProductAsAdmin(storeUid, itemId) {
+      if (!confirm('Delete this product?')) return;
+      db.ref(`menus/${storeUid}/${itemId}`).remove().then(() => showToast('Product deleted.', 'danger'));
+    }
+
+    function renderSettlements() {
+      const tbody = document.getElementById('settlements-table-body'); tbody.innerHTML = '';
+      const entries = Object.entries(state.settlements).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+      let pendingCount = 0;
+      entries.forEach(([id, s]) => {
+        if (s.status === 'PENDING') pendingCount++;
+        const riderPhone = state.deliveryPartners[s.riderUid]?.phone || '';
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${escapeHtml(s.riderName || 'Rider')}</strong><div style="font-size:0.74rem; color:var(--text-muted);">${escapeHtml(riderPhone)}</div></td>
+            <td><strong style="color:var(--primary); font-size:1rem;">₹${Number(s.amount || 0).toFixed(0)}</strong></td>
+            <td><span class="badge badge-info">${escapeHtml(s.mode)}</span></td>
+            <td><code>${escapeHtml(s.utr || 'HANDOVER')}</code></td>
+            <td><small>${new Date(s.createdAt).toLocaleDateString()}</small></td>
+            <td>${s.status === 'APPROVED' ? '<span class="badge badge-success">Approved</span>' : (s.status === 'REJECTED' ? '<span class="badge badge-danger">Rejected</span>' : '<span class="badge badge-warning">Pending</span>')}</td>
+            <td>${s.status === 'PENDING' ? `<div style="display:flex; gap:6px;"><button class="btn btn-success btn-sm" onclick="db.ref('settlements/${id}').update({status:'APPROVED'})">Approve</button><button class="btn btn-danger btn-sm" onclick="db.ref('settlements/${id}').update({status:'REJECTED'})">Reject</button></div>` : ''}</td>
+          </tr>`;
+      });
+      document.getElementById('sidebar-settlement-badge').textContent = pendingCount;
+      document.getElementById('settlement-pending-header-badge').textContent = `${pendingCount} Pending`;
+      if (entries.length === 0) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No COD cash handovers yet.</td></tr>`;
+    }
+
+    function renderDeliveryPartners() {
+      const tbody = document.getElementById('delivery-table-body'); tbody.innerHTML = '';
+      const query = (document.getElementById('rider-admin-search')?.value || '').toLowerCase();
+      let entries = Object.entries(state.deliveryPartners);
+      if (query) entries = entries.filter(([_, d]) => (d.name || '').toLowerCase().includes(query) || (d.phone || '').includes(query));
+      if (entries.length === 0) { tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No riders found.</td></tr>`; return; }
+
+      const maxLimit = Number(state.settings?.maxRiderCashLimit || 3000);
+      entries.forEach(([uid, d]) => {
+        const metrics = getRiderCashMetrics(uid);
+        let passedCount = 0, deliveredCount = 0;
+        Object.values(state.orders).forEach(o => {
+          if (o.rejectedByRiders && o.rejectedByRiders[uid]) passedCount++;
+          if (o.deliveryUid === uid && o.status === 'DELIVERED') deliveredCount++;
+        });
+        const ratingBadge = d.ratingCount ? `<div style="color:#fbbf24; font-size:0.78rem; font-weight:800;">⭐ ${Number(d.ratingAvg || 5).toFixed(1)} (${d.ratingCount})</div>` : `<div style="color:var(--text-muted); font-size:0.72rem;">No ratings</div>`;
+
+        const liveTime = (d.lastLocationUpdate || d.lastSeen)
+          ? `<div style="font-size:0.68rem; color:#34d399; margin-top:2px;">🔄 ${new Date(d.lastLocationUpdate || d.lastSeen).toLocaleTimeString()}</div>`
+          : '';
+        let trailBtn = '';
+        if (Array.isArray(d.recentRoute) && d.recentRoute.length >= 2) {
+          const pts = d.recentRoute;
+          const origin = `${pts[0].lat},${pts[0].lng}`;
+          const dest = `${pts[pts.length - 1].lat},${pts[pts.length - 1].lng}`;
+          const mid = pts.slice(1, -1).slice(-8).map(p => `${p.lat},${p.lng}`).join('|');
+          const routeUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(dest)}${mid ? `&waypoints=${encodeURIComponent(mid)}` : ''}`;
+          trailBtn = `<div><a href="${routeUrl}" target="_blank" style="color:#fbbf24; font-size:0.72rem; font-weight:800; text-decoration:none;"><i class="fa-solid fa-route"></i> Route (${pts.length} pts)</a></div>`;
+        }
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${escapeHtml(d.name || 'Rider')}</strong>${ratingBadge}${d.suspended ? '<div><span class="badge badge-danger">Suspended</span></div>' : ''}</td>
+            <td>${escapeHtml(d.phone || 'N/A')}<div style="font-size:0.75rem; color:#38bdf8;">UPI: ${escapeHtml(d.upiId || 'Not Set')}</div></td>
+            <td>${escapeHtml(d.vehicle || 'Bike')}</td>
+            <td>${d.online ? '<span class="badge badge-success">Online</span>' : '<span class="badge badge-danger">Offline</span>'}</td>
+            <td><strong style="color:${metrics.netCashInHand >= maxLimit ? 'var(--danger)' : 'var(--warning)'}">₹${metrics.netCashInHand.toFixed(0)}</strong></td>
+            <td><strong>${deliveredCount} Done / ${passedCount} Passed</strong></td>
+            <td>${d.lat ? `<a href="https://www.google.com/maps?q=${d.lat},${d.lng}" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:800;"><i class="fa-solid fa-satellite"></i> Live Map</a>${liveTime}${trailBtn}` : 'Offline'}</td>
+            <td><div style="display:flex; flex-direction:column; gap:4px;"><button class="btn btn-info btn-sm" onclick="openRiderManageModal('${uid}')"><i class="fa-solid fa-sliders"></i> Manage</button><button class="btn ${d.approved ? 'btn-danger' : 'btn-success'} btn-sm" onclick="db.ref('deliveryPartners/${uid}').update({approved: ${!d.approved}})">${d.approved ? 'Revoke' : 'Approve'}</button></div></td>
+          </tr>`;
+      });
+    }
+
+    function openRiderManageModal(riderUid) {
+      const d = state.deliveryPartners[riderUid]; if (!d) return;
+      const cashMetrics = getRiderCashMetrics(riderUid);
+      let deliveredTrips = 0, passedTrips = 0, totalEarned = 0;
+      const baseFee = Number(state.settings?.riderBaseFee || state.settings?.deliveryCharge || 25);
+      Object.values(state.orders).forEach(o => {
+        if (o.deliveryUid === riderUid && o.status === 'DELIVERED') { deliveredTrips++; totalEarned += (o.deliveryCharge !== undefined && Number(o.deliveryCharge) > 0) ? Number(o.deliveryCharge) : baseFee; }
+        if (o.rejectedByRiders && o.rejectedByRiders[riderUid]) passedTrips++;
+      });
+      let paidPayout = 0;
+      Object.values(state.riderPayouts).forEach(p => { if (p.riderUid === riderUid && p.status === 'PAID') paidPayout += Number(p.amount || 0); });
+      const ratingText = d.ratingCount ? `⭐ ${Number(d.ratingAvg || 5).toFixed(1)} (${d.ratingCount} ratings)` : 'No ratings yet';
+
+      document.getElementById('rider-manage-summary').innerHTML = `
+        <div class="detail-kv"><small>Rating & Email</small><strong>${ratingText} • ${escapeHtml(d.email || 'N/A')}</strong></div>
+        <div class="detail-kv"><small>Trips Done / Passed</small><strong>${deliveredTrips} Delivered • ${passedTrips} Passed</strong></div>
+        <div class="detail-kv"><small>Earnings / Paid</small><strong>Earned ₹${totalEarned.toFixed(0)} • Paid ₹${paidPayout.toFixed(0)}</strong></div>
+        <div class="detail-kv"><small>COD Cash Held / Settled</small><strong>Held ₹${cashMetrics.netCashInHand.toFixed(0)} • Settled ₹${cashMetrics.totalSettled.toFixed(0)}</strong></div>`;
+
+      document.getElementById('edit-rider-uid').value = riderUid;
+      document.getElementById('edit-rider-name').value = d.name || '';
+      document.getElementById('edit-rider-phone').value = d.phone || '';
+      document.getElementById('edit-rider-vehicle').value = d.vehicle || '';
+      document.getElementById('edit-rider-upi').value = d.upiId || '';
+      document.getElementById('edit-rider-note').value = d.adminNote || '';
+      document.getElementById('edit-rider-approved').checked = d.approved === true;
+      document.getElementById('edit-rider-online').checked = d.online === true;
+      document.getElementById('edit-rider-suspended').checked = d.suspended === true;
+      document.getElementById('riderManageModal').classList.add('open');
+      window.history.pushState({ modal: 'riderManage' }, '');
+    }
+
+    document.getElementById('rider-manage-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const uid = document.getElementById('edit-rider-uid').value;
+      const suspended = document.getElementById('edit-rider-suspended').checked;
+      db.ref('deliveryPartners/' + uid).update({
+        name: sanitizeText(document.getElementById('edit-rider-name').value.trim()),
+        phone: document.getElementById('edit-rider-phone').value.trim(),
+        vehicle: sanitizeText(document.getElementById('edit-rider-vehicle').value.trim()),
+        upiId: document.getElementById('edit-rider-upi').value.trim(),
+        adminNote: sanitizeText(document.getElementById('edit-rider-note').value.trim()),
+        approved: document.getElementById('edit-rider-approved').checked,
+        online: suspended ? false : document.getElementById('edit-rider-online').checked,
+        suspended
+      }).then(() => { closeModalById('riderManageModal'); showToast('Rider profile updated!', 'success'); });
+    });
+
+    function renderCustomers() {
+      const tbody = document.getElementById('customers-table-body'); tbody.innerHTML = '';
+      const query = (document.getElementById('customer-admin-search')?.value || '').toLowerCase();
+      let entries = Object.entries(state.customers);
+      if (query) {
+        entries = entries.filter(([uid, c]) =>
+          uid.toLowerCase().includes(query) || (c.name || '').toLowerCase().includes(query) ||
+          (c.phone || '').includes(query) || (c.email || '').toLowerCase().includes(query) ||
+          (c.referralCode || '').toLowerCase().includes(query)
+        );
+      }
+      if (entries.length === 0) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No customers found.</td></tr>`; return; }
+
+      entries.forEach(([uid, c]) => {
+        const isBanned = c.blocked === true;
+        let totalOrders = 0, totalSpent = 0, cancels = 0, spamFlags = 0;
+        Object.values(state.orders).forEach(o => {
+          if (o.customerUid === uid) {
+            totalOrders++;
+            if (o.status === 'DELIVERED') totalSpent += Number(o.totalAmount || 0);
+            if (o.status === 'CANCELLED') cancels++;
+            if (o.isSpamSuspect) spamFlags++;
+          }
+        });
+        const gpsHtml = (c.lat && c.lng) ? `<a href="https://www.google.com/maps?q=${c.lat},${c.lng}" target="_blank" style="color:#38bdf8; text-decoration:none;"><i class="fa-solid fa-location-dot"></i> Map</a>` : '<small style="color:var(--text-muted);">No GPS</small>';
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${escapeHtml(c.name || 'Customer')}</strong><div style="font-size:0.72rem; color:#38bdf8;">Ref: ${escapeHtml(c.referralCode || ('GB' + uid.slice(0,6).toUpperCase()))}</div></td>
+            <td>${escapeHtml(c.phone || 'N/A')}<div style="font-size:0.72rem; color:var(--text-muted);">${escapeHtml(c.email || '')}</div></td>
+            <td><strong style="color:#fbbf24;">₹${Number(c.walletBalance || 0).toFixed(0)}</strong></td>
+            <td><strong>${totalOrders} Orders</strong> (₹${totalSpent.toFixed(0)})<div style="font-size:0.72rem; color:${spamFlags > 0 ? 'var(--danger)' : 'var(--text-muted)'};">${cancels} Cancel • ${spamFlags} Spam Flag</div></td>
+            <td>${gpsHtml}</td>
+            <td>${isBanned ? '<span class="badge badge-danger">Banned</span>' : '<span class="badge badge-success">Active</span>'}</td>
+            <td><div style="display:flex; gap:6px;"><button class="btn btn-info btn-sm" onclick="openCustomerManageModal('${uid}')"><i class="fa-solid fa-user-pen"></i> Details</button><button class="btn ${isBanned ? 'btn-success' : 'btn-danger'} btn-sm" onclick="db.ref('customers/${uid}').update({blocked: ${!isBanned}})">${isBanned ? 'Unban' : 'Ban'}</button></div></td>
+          </tr>`;
+      });
+    }
+
+    function openCustomerManageModal(custUid, pushHistory = true) {
+      const c = state.customers[custUid]; if (!c) return;
+      currentEditingCustomerId = custUid;
+
+      const custOrders = Object.entries(state.orders).filter(([_, o]) => o.customerUid === custUid).sort((a,b) => (b[1].createdAt||0) - (a[1].createdAt||0));
+      let spent = 0, cancels = 0;
+      custOrders.forEach(([_, o]) => { if (o.status === 'DELIVERED') spent += Number(o.totalAmount || 0); if (o.status === 'CANCELLED') cancels++; });
+      const mapUrl = (c.lat && c.lng) ? `https://www.google.com/maps?q=${c.lat},${c.lng}` : (c.locationLink || '');
+
+      document.getElementById('customer-manage-summary').innerHTML = `
+        <div class="detail-kv"><small>Wallet & Referral</small><strong>₹${Number(c.walletBalance || 0).toFixed(2)} • Code: ${escapeHtml(c.referralCode || ('GB' + custUid.slice(0,6).toUpperCase()))}</strong></div>
+        <div class="detail-kv"><small>Email & Joined</small><strong>${escapeHtml(c.email || 'N/A')} • ${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-'}</strong></div>
+        <div class="detail-kv"><small>Order Stats</small><strong>${custOrders.length} Total • ₹${spent.toFixed(0)} Spent • ${cancels} Cancels</strong></div>
+        <div class="detail-kv"><small>Saved GPS</small><strong>${mapUrl ? `<a href="${mapUrl}" target="_blank" style="color:#38bdf8;">Open Map</a>` : 'Not saved'}</strong></div>`;
+
+      document.getElementById('edit-cust-uid').value = custUid;
+      document.getElementById('edit-cust-name').value = c.name || '';
+      document.getElementById('edit-cust-phone').value = c.phone || '';
+      document.getElementById('edit-cust-address').value = c.address || '';
+      document.getElementById('edit-cust-note').value = c.adminNote || '';
+      document.getElementById('edit-cust-blocked').checked = c.blocked === true;
+
+      const ordersListEl = document.getElementById('customer-manage-orders');
+      if (custOrders.length === 0) ordersListEl.innerHTML = '<em style="color:var(--text-muted);">No orders placed yet.</em>';
+      else {
+        ordersListEl.innerHTML = custOrders.slice(0, 10).map(([id, o]) => `
+          <div style="display:flex; justify-content:space-between; padding:6px 8px; border-bottom:1px solid var(--border); background:#090e1a;">
+            <span><strong>#${id.slice(-6)}</strong> (${new Date(o.createdAt||Date.now()).toLocaleDateString()}) • ₹${Number(o.totalAmount||0).toFixed(0)} ${o.isSpamSuspect ? '🚨' : ''}</span>
+            <span>${getStatusBadge(o.status)}</span>
+          </div>`).join('');
+      }
+
+      document.getElementById('customerManageModal').classList.add('open');
+      if (pushHistory) window.history.pushState({ modal: 'custManage' }, '');
+    }
+
+    function adminAdjustCustomerWallet(mode) {
+      const uid = document.getElementById('edit-cust-uid').value;
+      const amt = Number(document.getElementById('admin-cust-wallet-amt').value || 0);
+      const reason = sanitizeText(document.getElementById('admin-cust-wallet-reason').value.trim()) || (mode === 'CREDIT' ? 'Admin Bonus / Refund' : 'Admin Adjustment');
+      if (!uid || amt <= 0) { showToast('Enter valid amount!', 'danger'); return; }
+
+      db.ref(`customers/${uid}/walletBalance`).transaction(bal => {
+        const cur = Number(bal || 0);
+        return mode === 'CREDIT' ? cur + amt : Math.max(0, cur - amt);
+      }).then(() => {
+        db.ref(`walletTransactions/${uid}`).push({ type: mode, amount: amt, note: reason, createdAt: Date.now() });
+        document.getElementById('admin-cust-wallet-amt').value = '';
+        document.getElementById('admin-cust-wallet-reason').value = '';
+        showToast(`✅ Wallet ${mode === 'CREDIT' ? 'Credited' : 'Debited'} ₹${amt}!`, 'success');
+      });
+    }
+
+    document.getElementById('customer-manage-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const uid = document.getElementById('edit-cust-uid').value;
+      db.ref('customers/' + uid).update({
+        name: sanitizeText(document.getElementById('edit-cust-name').value.trim()),
+        phone: document.getElementById('edit-cust-phone').value.trim(),
+        address: sanitizeText(document.getElementById('edit-cust-address').value.trim()),
+        adminNote: sanitizeText(document.getElementById('edit-cust-note').value.trim()),
+        blocked: document.getElementById('edit-cust-blocked').checked,
+        updatedAt: Date.now()
+      }).then(() => { closeModalById('customerManageModal'); showToast('Customer account updated!', 'success'); });
+    });
+
+    // REPORTS & EXPORTS
+    function renderReports() {
+      let verifiedUPI = 0, totalSettledCash = 0, totalPaidStores = 0, totalPaidRiders = 0;
+      Object.values(state.orders).forEach(o => { if (o.paymentMode === 'UPI' && o.paymentStatus === 'VERIFIED') verifiedUPI += Number(o.totalAmount || 0); });
+      Object.values(state.settlements).forEach(s => { if (s.status === 'APPROVED') totalSettledCash += Number(s.amount || 0); });
+      Object.values(state.storePayouts).forEach(p => { if (p.status === 'PAID') totalPaidStores += Number(p.amount || 0); });
+      Object.values(state.riderPayouts).forEach(p => { if (p.status === 'PAID') totalPaidRiders += Number(p.amount || 0); });
+
+      document.getElementById('report-verified-upi').textContent = '₹' + verifiedUPI.toFixed(0);
+      document.getElementById('report-settled-cash').textContent = '₹' + totalSettledCash.toFixed(0);
+      document.getElementById('report-paid-stores').textContent = '₹' + totalPaidStores.toFixed(0);
+      document.getElementById('report-paid-riders').textContent = '₹' + totalPaidRiders.toFixed(0);
+
+      const topStoresTbody = document.getElementById('reports-top-stores');
+      if (topStoresTbody) {
+        const storeRows = Object.entries(state.restaurants).map(([uid, s]) => {
+          const m = getStorePayoutMetrics(uid);
+          return { name: s.name || 'Store', orders: m.orderCount, sales: m.grossSales, comm: m.adminCut };
+        }).sort((a,b) => b.sales - a.sales);
+        if (storeRows.length === 0) topStoresTbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No store sales data yet.</td></tr>`;
+        else {
+          topStoresTbody.innerHTML = storeRows.map(r => `<tr><td><strong>${escapeHtml(r.name)}</strong></td><td>${r.orders}</td><td>₹${r.sales.toFixed(2)}</td><td style="color:#38bdf8; font-weight:800;">₹${r.comm.toFixed(2)}</td></tr>`).join('');
+        }
+      }
+    }
+
+    function exportOrdersCSV() {
+      const orders = Object.entries(state.orders);
+      if (orders.length === 0) return;
+      let csv = "Order ID,Phone,Amount,PIN,Payment Mode,Status,Spam Flag\n";
+      orders.forEach(([id, o]) => {
+        csv += `${id.slice(-6)},${o.phone || ''},${Number(o.totalAmount || 0).toFixed(0)},${o.deliveryOtp || ''},${o.paymentMode || 'COD'},${o.status || 'PLACED'},${o.isSpamSuspect ? 'YES' : 'NO'}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `GossaigaonBazar_Orders_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+
+    function printBillSlip(orderId) {
+      const o = state.orders[orderId]; if (!o) return;
+      const printContainer = document.getElementById('printable-receipt');
+      printContainer.innerHTML = `
+        <div style="max-width:280px; margin:0 auto; font-family:monospace; font-size:12px;">
+          <h2 style="text-align:center;">GOSSAIGAON BAZAR</h2><hr>
+          <p>Order: #${orderId.slice(-6)}</p><p>PIN: ${o.deliveryOtp || 'N/A'}</p>
+          <p>Phone: ${o.phone || 'N/A'}</p><p>Address: ${o.address || 'Gossaigaon'}</p>
+          <p>Payment: ${o.paymentMode || 'COD'}</p><hr>
+          <h3>TOTAL: ₹${Number(o.totalAmount || 0).toFixed(0)}</h3>
+        </div>`;
+      printContainer.style.display = 'block'; window.print(); printContainer.style.display = 'none';
+    }
+
+    function seedSampleData() {
+      if (!confirm("Seed demo supermarket and grocery catalog with exact Gossaigaon GPS?")) return;
+      const demoStoreId = "demo_store_gossaigaon_1";
+      const updates = {};
+      updates[`/restaurants/${demoStoreId}`] = {
+        name: "Gossaigaon Fresh Supermarket", cuisine: "Vegetables, Dairy & Staples",
+        address: "Station Road, Ward No. 2, Gossaigaon", phone: "9876500000", upiId: "freshstore@okicici",
+        approved: true, isOpen: true, lat: 26.4524, lng: 89.9723
+      };
+      updates[`/menus/${demoStoreId}`] = {
+        item_1: { name: "Local Potatoes (1 kg)", price: 35, mrp: 45, discountPercent: 22, isOnSale: true, searchKeywords: "aloo, potato, sabzi, veg", description: "Fresh Assam Farm Potatoes 1 kg", available: true, adminApproved: true, approvalStatus: "APPROVED", category: "VEG" },
+        item_2: { name: "Shudh Chakki Atta (5 kg)", price: 240, mrp: 280, discountPercent: 14, isOnSale: false, searchKeywords: "atta, wheat, flour, aashirvaad", description: "100% Whole Wheat Chakki Atta", available: true, adminApproved: true, approvalStatus: "APPROVED", category: "STAPLES" }
+      };
+      updates['/admin/settings/deliveryCharge'] = 25;
+      updates['/admin/settings/freeDeliveryAbove'] = 299;
+      updates['/admin/settings/upiId'] = 'gossaigaonbazar@apl';
+      updates['/admin/settings/customCategories'] = DEFAULT_CATEGORIES;
+      db.ref().update(updates).then(() => showToast('Demo data seeded!', 'success'));
+    }
+
+    function escapeHtml(text) {
+      return String(text || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>

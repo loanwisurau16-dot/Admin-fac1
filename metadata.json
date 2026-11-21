@@ -1,0 +1,6 @@
+{
+  "name": "Gossaigaon Bazar - Master Admin Command Center & CMS",
+  "description": "Gossaigaon Bazar Master Admin Command Center, Real-Time Dispatch Radar, Product Approvals, Payouts & Customer App CMS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
