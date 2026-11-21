@@ -1,0 +1,96 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    name: Build GB Admin APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android 36 SDK Platform
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Install NPM Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build Vite Web App
+        env:
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+        run: npm run build
+
+      - name: Generate Android Project & Sync
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+          npx cap sync android
+
+      - name: Apply App Icon & Notification Icon
+        run: |
+          ICON_SRC="public/pwa-512x512.png"
+          MASK_SRC="public/pwa-maskable-512x512.png"
+          if [ -f "$ICON_SRC" ]; then
+            for dir in android/app/src/main/res/mipmap-*dpi; do
+              if [ -d "$dir" ]; then
+                cp "$ICON_SRC" "$dir/ic_launcher.png"
+                cp "$ICON_SRC" "$dir/ic_launcher_round.png"
+                if [ -f "$MASK_SRC" ]; then
+                  cp "$MASK_SRC" "$dir/ic_launcher_foreground.png"
+                else
+                  cp "$ICON_SRC" "$dir/ic_launcher_foreground.png"
+                fi
+                cp "$ICON_SRC" "$dir/ic_launcher_background.png"
+              fi
+            done
+          fi
+
+          mkdir -p android/app/src/main/res/drawable
+          if [ -f "$ICON_SRC" ]; then
+            cp "$ICON_SRC" android/app/src/main/res/drawable/ic_notif_large.png
+          fi
+          printf '%s\n' \
+            '<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">' \
+            '  <path android:fillColor="#FFFFFF" android:pathData="M17.21,9l-4.38,-6.56c-0.19,-0.28 -0.51,-0.42 -0.83,-0.42c-0.32,0 -0.64,0.14 -0.83,0.43L6.79,9H2c-0.55,0 -1,0.45 -1,1c0,0.09 0.01,0.18 0.04,0.27l2.54,9.27c0.23,0.84 1,1.46 1.92,1.46h13c0.92,0 1.69,-0.62 1.93,-1.46l2.54,-9.27L23,10c0,-0.55 -0.45,-1 -1,-1H17.21zM9,9l3,-4.4L15,9H9zM12,17c-1.1,0 -2,-0.9 -2,-2s0.9,-2 2,-2s2,0.9 2,2S13.1,17 12,17z"/>' \
+            '</vector>' > android/app/src/main/res/drawable/ic_stat_gb_admin.xml
+
+      - name: Build Debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Rename Output APK
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk GB-Admin.apk
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GB-Admin-APK
+          path: GB-Admin.apk
+          retention-days: 30
